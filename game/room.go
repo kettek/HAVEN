@@ -1,12 +1,15 @@
 package game
 
 import (
+	"image/color"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/res"
 )
 
 type Room struct {
 	Tiles           [][]Tile
+	color           color.NRGBA
 	droppingIn      bool
 	droppingInCount int
 }
@@ -53,6 +56,7 @@ func (r *Room) Update() error {
 }
 
 func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
+	screen.Fill(r.color)
 	//rw := float64(len(r.Tiles[0])) * 9
 	//rh := float64(len(r.Tiles))*9 + float64(len(r.Tiles[0]))*4.5
 	//geom.Translate(-rw*2, -rh/2*2)
