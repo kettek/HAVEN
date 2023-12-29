@@ -37,8 +37,8 @@ func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	eimg := ebiten.NewImageFromImage(img)
 
 	var layers []*ebiten.Image
-	for x := 0; x < img.Bounds().Max.X; x += 13 {
-		layers = append(layers, eimg.SubImage(image.Rect(x, 0, x+13, 13)).(*ebiten.Image))
+	for x := 0; x < img.Bounds().Max.X; x += int(TileWidth) {
+		layers = append(layers, eimg.SubImage(image.Rect(x, 0, x+int(TileWidth), int(TileHeight))).(*ebiten.Image))
 	}
 	loadedSpriteStacks[sprite] = layers
 	return layers, nil
