@@ -50,8 +50,8 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 
 	geom1 := ss.GeoM(ebiten.GeoM{})
 	geom2 := ss.IsoGeoM(ebiten.GeoM{})
-	geom1.Scale(ratio, ratio)
-	geom2.Scale(1-ratio, 1-ratio)
+	//geom1.Scale(ratio, ratio)
+	//geom2.Scale(1-ratio, 1-ratio)
 
 	// Get entire matrix from geom1 and geom2 and multiply the elements by ratio.
 	a := geom1.Element(0, 0)*ratio + geom2.Element(0, 0)*(1-ratio)
@@ -72,7 +72,7 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 	op.GeoM.Concat(geom)
 
 	for i := 0; i < len(ss.layers); i++ {
-		op.GeoM.Translate(0, ss.layerDistance)
+		op.GeoM.Translate(0, ss.layerDistance*(1-ratio))
 		op.ColorScale.ScaleAlpha(ss.alpha)
 		screen.DrawImage(ss.layers[i], op)
 	}
@@ -83,7 +83,7 @@ func (ss *SpriteStack) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	op.GeoM = ss.GeoM(op.GeoM)
 	op.GeoM.Concat(geom)
 	for i := 0; i < len(ss.layers); i++ {
-		op.GeoM.Translate(0, ss.layerDistance)
+		//op.GeoM.Translate(0, ss.layerDistance)
 		op.ColorScale.ScaleAlpha(ss.alpha)
 		screen.DrawImage(ss.layers[i], op)
 	}
