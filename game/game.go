@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Game struct {
@@ -22,12 +23,23 @@ func NewGame() *Game {
 func (g *Game) Update() error {
 	g.camera.Update()
 	g.currentRoom.Update()
+
+	// FIXME: Just a test.
+	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+		g.currentRoom.transition = 60
+		x, y := g.currentRoom.CenterIso()
+		g.camera.CenterTo(x*3.0, y*3.0)
+	} else if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
+		g.currentRoom.transition = -60
+		x, y := g.currentRoom.Center()
+		g.camera.CenterTo(x*3.0, y*3.0)
+	}
+
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	geom := ebiten.GeoM{}
-	geom.Translate(50, 50)
 	geom.Scale(3, 3)
 
 	geom.Translate(-g.camera.x, -g.camera.y)

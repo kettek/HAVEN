@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type Room struct {
@@ -77,13 +76,6 @@ func (r *Room) Update() error {
 		}
 	}
 
-	// FIXME: Just a test.
-	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
-		r.transition = 60
-	} else if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
-		r.transition = -60
-	}
-
 	return nil
 }
 
@@ -123,4 +115,14 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			}
 		}
 	}
+}
+
+func (r *Room) Center() (float64, float64) {
+	x, y := GetTilePosition(len(r.Tiles[0])/2, len(r.Tiles)/2)
+	return x, y
+}
+
+func (r *Room) CenterIso() (float64, float64) {
+	x, y := GetTileIsoPosition(len(r.Tiles[0])/2, len(r.Tiles)/2)
+	return x, y
 }
