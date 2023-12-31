@@ -122,24 +122,24 @@ func (r *Room) ToFlat() {
 	r.drawMode = DrawModeIsoToFlat
 }
 
-func (r *Room) GetTilePositionGeoM(y, x int) (g ebiten.GeoM, ratio float64) {
+func (r *Room) GetTilePositionGeoM(x, y int) (g ebiten.GeoM, ratio float64) {
 	if r.drawMode == DrawModeFlatToIso {
 		ratio = float64(r.transition) / 60
-		x1, y1 := GetTilePosition(y, x)
-		x2, y2 := GetTileIsoPosition(y, x)
+		x1, y1 := GetTilePosition(x, y)
+		x2, y2 := GetTileIsoPosition(x, y)
 		x, y := x1*ratio+x2*(1-ratio), y1*ratio+y2*(1-ratio)
 		g.Translate(x, y)
 	} else if r.drawMode == DrawModeIsoToFlat {
 		ratio = float64(r.transition) / 60
-		x1, y1 := GetTilePosition(y, x)
-		x2, y2 := GetTileIsoPosition(y, x)
+		x1, y1 := GetTilePosition(x, y)
+		x2, y2 := GetTileIsoPosition(x, y)
 		x, y := x1*(1-ratio)+x2*ratio, y1*(1-ratio)+y2*ratio
 		g.Translate(x, y)
 		ratio = 1.0 - ratio
 	} else if r.drawMode == DrawModeIso {
-		g.Translate(GetTileIsoPosition(y, x))
+		g.Translate(GetTileIsoPosition(x, y))
 	} else {
-		g.Translate(GetTilePosition(y, x))
+		g.Translate(GetTilePosition(x, y))
 	}
 	return g, ratio
 }
@@ -151,16 +151,21 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			if r.Tiles[i][j].SpriteStack == nil {
 				continue
 			}
-			g, ratio := r.GetTilePositionGeoM(i, j)
+			g, ratio := r.GetTilePositionGeoM(j, i)
 			g.Concat(geom)
 			r.Tiles[i][j].SpriteStack.Draw(screen, g, r.drawMode, ratio)
 		}
 	}
 	for _, a := range r.Actors {
-		g, ratio := r.GetTilePositionGeoM(a.Position())
+		x, y := a.Position()
+		g, ratio := r.GetTilePositionGeoM(x, y)
 		g.Concat(geom)
 		a.Draw(screen, r, g, r.drawMode, ratio)
 	}
+}
+
+func (r *Room) Size() (int, int) {
+	return len(r.Tiles[0]), len(r.Tiles)
 }
 
 func (r *Room) Center() (float64, float64) {
@@ -171,4 +176,19 @@ func (r *Room) Center() (float64, float64) {
 func (r *Room) CenterIso() (float64, float64) {
 	x, y := GetTileIsoPosition(len(r.Tiles[0]), len(r.Tiles))
 	return x / 2, y / 2
+}
+
+func (r *Room) GetTilePositionFromCoordinate(x, y float64) (int, int) {
+	if r.drawMode == DrawModeIso {
+		return GetTileIsoPositionFromCoordinate(x, y)
+	} else {
+		return GetTilePositionFromCoordinate(x, y)
+	}
+}
+
+func (r *Room) GetTile(x, y int) *Tile {
+	if x < 0 || y < 0 || y >= len(r.Tiles) || x >= len(r.Tiles[y]) {
+		return nil
+	}
+	return &r.Tiles[y][x]
 }

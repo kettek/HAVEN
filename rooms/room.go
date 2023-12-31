@@ -52,9 +52,12 @@ func (r *Room) ToGameRoom() *game.Room {
 	lines = strings.Split(r.entities, "\n")
 	lines = lines[1:]
 	for y, line := range lines {
-		rx := 0
+		rx := 1
 		for _, char := range line {
-			if char == ' ' || char == '\t' {
+			if char == '\t' {
+				continue
+			}
+			if char == ' ' {
 				continue
 			}
 			rx++
@@ -62,7 +65,7 @@ func (r *Room) ToGameRoom() *game.Room {
 			if !ok {
 				continue
 			}
-			actor := actors.New(entity, y, rx)
+			actor := actors.New(entity, rx, y)
 			if actor == nil {
 				continue
 			}
@@ -72,5 +75,3 @@ func (r *Room) ToGameRoom() *game.Room {
 
 	return g
 }
-
-var data = map[string]Room{}

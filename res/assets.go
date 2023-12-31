@@ -18,7 +18,7 @@ var TileWidth = 13.0
 var TileHeight = 13.0
 var TileHalfWidth = 6.0
 var TileHalfHeight = 6.0
-var TileStep = 9.0
+var TileYStep = 9.0
 var TileXStep = 4.5
 
 func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {

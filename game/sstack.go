@@ -1,6 +1,7 @@
 package game
 
 import (
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -12,6 +13,7 @@ type SpriteStack struct {
 	LayerDistance float64
 	Alpha         float32
 	Rotation      float64
+	Highlight     bool
 }
 
 func NewSpriteStack(sprite string) *SpriteStack {
@@ -71,6 +73,10 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 
 	op.GeoM.Concat(geom)
 
+	if ss.Highlight {
+		op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
+	}
+
 	for i := 0; i < len(ss.layers); i++ {
 		op.GeoM.Translate(0, ss.LayerDistance*(1-ratio))
 		op.ColorScale.ScaleAlpha(ss.Alpha)
@@ -94,6 +100,9 @@ func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM = ss.GeoM(op.GeoM)
 	op.GeoM.Concat(geom)
+	if ss.Highlight {
+		op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
+	}
 	for i := 0; i < len(ss.layers); i++ {
 		//op.GeoM.Translate(0, ss.LayerDistance)
 		op.ColorScale.ScaleAlpha(ss.Alpha)
@@ -105,6 +114,9 @@ func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM = ss.IsoGeoM(op.GeoM)
 	op.GeoM.Concat(geom)
+	if ss.Highlight {
+		op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
+	}
 	for i := 0; i < len(ss.layers); i++ {
 		op.GeoM.Translate(0, ss.LayerDistance)
 		op.ColorScale.ScaleAlpha(ss.Alpha)

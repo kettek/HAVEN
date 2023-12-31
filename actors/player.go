@@ -60,7 +60,7 @@ func (p *Player) SetPosition(x, y int) {
 }
 
 func init() {
-	actors["player"] = func(y, x int) game.Actor {
+	actors["player"] = func(x, y int) game.Actor {
 		ss := game.NewSpriteStack("player")
 		ss.LayerDistance = -1
 		return &Player{

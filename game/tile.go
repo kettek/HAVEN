@@ -26,9 +26,18 @@ func (t *Tile) Update() {
 }
 
 func GetTileIsoPosition(x, y int) (float64, float64) {
-	return float64(x)*res.TileStep - float64(y)*(res.TileStep), float64(y)*res.TileStep + float64(x)*(res.TileXStep) - (float64(y) * res.TileXStep)
+	return float64(x-y) * res.TileYStep, float64(x+y) * res.TileXStep
 }
 
 func GetTilePosition(x, y int) (float64, float64) {
 	return float64(x) * res.TileWidth, float64(y) * res.TileHeight
+}
+
+func GetTileIsoPositionFromCoordinate(x, y float64) (int, int) {
+	// This needs more slop, yo.
+	return int(math.Round(x/res.TileYStep+y/res.TileXStep) / 2), int(math.Round((y/res.TileXStep - x/res.TileYStep) / 2))
+}
+
+func GetTilePositionFromCoordinate(x, y float64) (int, int) {
+	return int(math.Round((x - res.TileHalfWidth) / res.TileWidth)), int(math.Round((y - res.TileHalfHeight) / res.TileHeight))
 }
