@@ -34,7 +34,7 @@ func (g *Game) Enter() {
 		g.camera = game.NewCamera()
 	}
 	if g.room == nil {
-		g.room = rooms.Rooms.BuildRoom("000_spawn")
+		g.room = rooms.BuildRoom("000_spawn")
 	}
 }
 func (g *Game) Leave() {

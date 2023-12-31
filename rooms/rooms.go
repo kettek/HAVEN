@@ -2,12 +2,8 @@ package rooms
 
 import "github.com/kettek/ebihack23/game"
 
-type rooms struct {
-	room map[string]Room
-}
-
-func (r *rooms) BuildRoom(name string) *game.Room {
-	room, ok := r.room[name]
+func BuildRoom(name string) *game.Room {
+	room, ok := rooms[name]
 	if !ok {
 		return nil
 	}
@@ -15,6 +11,4 @@ func (r *rooms) BuildRoom(name string) *game.Room {
 	return gRoom
 }
 
-var Rooms = rooms{
-	room: make(map[string]Room),
-}
+var rooms = make(map[string]Room)

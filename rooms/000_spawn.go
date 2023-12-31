@@ -3,7 +3,7 @@ package rooms
 import "fmt"
 
 func init() {
-	Rooms.room["000_spawn"] = Room{
+	rooms["000_spawn"] = Room{
 		tiles: `// First line is ignored because lazy.
 		##D##
 		# . #
