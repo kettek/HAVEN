@@ -29,7 +29,7 @@ func (r *Room) ToGameRoom() *game.Room {
 		}
 		lines[i] = c
 	}
-	height := len(lines)
+	height := len(lines) - 1
 	g := game.NewRoom(width, height)
 	g.OnUpdate = r.update
 	g.OnEnter = r.enter
@@ -50,7 +50,7 @@ func (r *Room) ToGameRoom() *game.Room {
 
 	// Make them entities.
 	lines = strings.Split(r.entities, "\n")
-	lines = lines[1:]
+	lines = lines[1 : len(lines)-1]
 	for y, line := range lines {
 		rx := 1
 		for _, char := range line {
