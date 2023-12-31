@@ -7,6 +7,7 @@ import (
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/rooms"
+	"github.com/kettek/ebihack23/settings"
 )
 
 type Game struct {
@@ -68,6 +69,16 @@ func (g *Game) Update() error {
 		g.room.ToFlat()
 		x, y := g.room.Center()
 		g.camera.MoveTo(x, y)
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyM) {
+		if settings.FilterMode == settings.MayoMode {
+			settings.FilterMode = settings.ClarityMode
+		} else {
+			settings.FilterMode = settings.MayoMode
+		}
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyN) {
+		settings.StackShading = !settings.StackShading
 	}
 
 	return nil

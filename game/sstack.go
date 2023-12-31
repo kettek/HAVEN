@@ -6,6 +6,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/res"
+	"github.com/kettek/ebihack23/settings"
 )
 
 type SpriteStack struct {
@@ -50,7 +51,9 @@ func (ss *SpriteStack) GeoM(geom ebiten.GeoM) ebiten.GeoM {
 }
 
 func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio float64) {
-	op := &ebiten.DrawImageOptions{}
+	op := &ebiten.DrawImageOptions{
+		Filter: settings.FilterMode,
+	}
 
 	geom1 := ss.GeoM(ebiten.GeoM{})
 	geom2 := ss.IsoGeoM(ebiten.GeoM{})
@@ -85,7 +88,7 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 		if ss.Highlight {
 			op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
 		}
-		if ss.Shaded {
+		if ss.Shaded || settings.StackShading {
 			r := float64(i) / float64(len(ss.layers)-1)
 			c := uint8(200.0 + 55*r)
 			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
@@ -107,7 +110,9 @@ func (ss *SpriteStack) Draw(screen *ebiten.Image, geom ebiten.GeoM, mode DrawMod
 }
 
 func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
-	op := &ebiten.DrawImageOptions{}
+	op := &ebiten.DrawImageOptions{
+		Filter: settings.FilterMode,
+	}
 	op.GeoM = ss.GeoM(op.GeoM)
 	op.GeoM.Concat(geom)
 	if ss.Highlight {
@@ -130,7 +135,9 @@ func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
 }
 
 func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
-	op := &ebiten.DrawImageOptions{}
+	op := &ebiten.DrawImageOptions{
+		Filter: settings.FilterMode,
+	}
 	op.GeoM = ss.IsoGeoM(op.GeoM)
 	op.GeoM.Concat(geom)
 	for i := 0; i < len(ss.layers); i++ {
@@ -140,7 +147,7 @@ func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
 		if ss.Highlight {
 			op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
 		}
-		if ss.Shaded {
+		if ss.Shaded || settings.StackShading {
 			r := float64(i) / float64(len(ss.layers)-1)
 			c := uint8(200.0 + 55*r)
 			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
