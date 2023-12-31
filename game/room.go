@@ -10,7 +10,7 @@ type Room struct {
 	Tiles           [][]Tile
 	Actors          []Actor
 	PendingCommands []ActorCommand
-	color           color.NRGBA
+	Color           color.NRGBA
 	droppingIn      bool
 	droppingInCount int
 	iso             bool
@@ -145,7 +145,7 @@ func (r *Room) GetTilePositionGeoM(x, y int) (g ebiten.GeoM, ratio float64) {
 }
 
 func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
-	screen.Fill(r.color)
+	screen.Fill(r.Color)
 	for i := range r.Tiles {
 		for j := range r.Tiles[i] {
 			if r.Tiles[i][j].SpriteStack == nil {

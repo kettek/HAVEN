@@ -79,6 +79,7 @@ func (g *Game) Enter() {
 	}
 	if g.room == nil {
 		g.room = rooms.BuildRoom("000_spawn")
+		g.room.OnEnter(g.room)
 	}
 }
 func (g *Game) Leave() {

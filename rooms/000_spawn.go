@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"image/color"
 
 	"github.com/kettek/ebihack23/game"
 )
@@ -18,7 +19,7 @@ func init() {
 		tileMap: map[string]string{
 			"#": "haven-wall",
 			".": "haven-floor",
-			"D": "door",
+			"D": "haven-door",
 			"T": "terminal",
 		},
 		entities: `
@@ -33,6 +34,7 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(r *game.Room) {
+			r.Color = color.NRGBA{205, 205, 180, 255}
 			fmt.Println("entered spawn")
 		},
 		leave: func(r *game.Room) {
