@@ -9,17 +9,17 @@ import (
 func init() {
 	rooms["000_spawn"] = Room{
 		tiles: `// First line is ignored because lazy.
-		##D##
-		# . #
-		#...C
+		##DT#
+		# ..#
+		#...#
 		# . #
 		#####
 		`,
 		tileMap: map[string]string{
-			"#": "wall",
-			".": "floor",
+			"#": "haven-wall",
+			".": "haven-floor",
 			"D": "door",
-			"C": "computer",
+			"T": "terminal",
 		},
 		entities: `
 		     
