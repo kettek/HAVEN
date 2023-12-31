@@ -3,6 +3,7 @@ package rooms
 import (
 	"strings"
 
+	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/game"
 )
 
@@ -12,9 +13,9 @@ type Room struct {
 	entities  string
 	entityMap map[string]string
 	metadata  map[string]interface{}
-	enter     func()
-	leave     func()
-	update    func()
+	enter     func(r *game.Room)
+	leave     func(r *game.Room)
+	update    func(r *game.Room)
 }
 
 func (r *Room) ToGameRoom() *game.Room {
@@ -44,6 +45,28 @@ func (r *Room) ToGameRoom() *game.Room {
 				continue
 			}
 			g.Tiles[y][x].SpriteStack = game.NewSpriteStack(tile)
+		}
+	}
+
+	// Make them entities.
+	lines = strings.Split(r.entities, "\n")
+	lines = lines[1:]
+	for y, line := range lines {
+		rx := 0
+		for _, char := range line {
+			if char == ' ' || char == '\t' {
+				continue
+			}
+			rx++
+			entity, ok := r.entityMap[string(char)]
+			if !ok {
+				continue
+			}
+			actor := actors.New(entity, y, rx)
+			if actor == nil {
+				continue
+			}
+			g.Actors = append(g.Actors, actor)
 		}
 	}
 

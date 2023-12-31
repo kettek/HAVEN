@@ -8,15 +8,17 @@ import (
 
 type Room struct {
 	Tiles           [][]Tile
+	Actors          []Actor
+	PendingCommands []ActorCommand
 	color           color.NRGBA
 	droppingIn      bool
 	droppingInCount int
 	iso             bool
 	transition      int
 	drawMode        DrawMode
-	OnUpdate        func()
-	OnEnter         func()
-	OnLeave         func()
+	OnUpdate        func(*Room)
+	OnEnter         func(*Room)
+	OnLeave         func(*Room)
 }
 
 func NewRoom(w, h int) *Room {
@@ -50,7 +52,7 @@ func (r *Room) Update() error {
 					if r.Tiles[i][j].SpriteStack == nil {
 						continue
 					}
-					r.Tiles[i][j].SpriteStack.layerDistance = -1
+					r.Tiles[i][j].SpriteStack.LayerDistance = -1
 					r.Tiles[i][j].SpriteStack.Alpha = 1
 				}
 			}
@@ -60,7 +62,7 @@ func (r *Room) Update() error {
 					if r.Tiles[i][j].SpriteStack == nil {
 						continue
 					}
-					r.Tiles[i][j].SpriteStack.layerDistance = -1 + (1.0-float64(r.droppingInCount)/60)*-10
+					r.Tiles[i][j].SpriteStack.LayerDistance = -1 + (1.0-float64(r.droppingInCount)/60)*-10
 					r.Tiles[i][j].SpriteStack.Alpha = float32(r.droppingInCount) / 60
 				}
 			}
@@ -87,8 +89,18 @@ func (r *Room) Update() error {
 		}
 	}
 
+	for _, a := range r.Actors {
+		if cmd := a.Update(r); cmd != nil {
+			r.PendingCommands = append(r.PendingCommands,
+				ActorCommand{
+					Actor: a,
+					Cmd:   cmd,
+				})
+		}
+	}
+
 	if r.OnUpdate != nil {
-		r.OnUpdate()
+		r.OnUpdate(r)
 	}
 
 	return nil
@@ -143,6 +155,11 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			g.Concat(geom)
 			r.Tiles[i][j].SpriteStack.Draw(screen, g, r.drawMode, ratio)
 		}
+	}
+	for _, a := range r.Actors {
+		g, ratio := r.GetTilePositionGeoM(a.Position())
+		g.Concat(geom)
+		a.Draw(screen, r, g, r.drawMode, ratio)
 	}
 }
 

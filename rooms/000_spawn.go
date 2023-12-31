@@ -1,6 +1,10 @@
 package rooms
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/kettek/ebihack23/game"
+)
 
 func init() {
 	rooms["000_spawn"] = Room{
@@ -28,14 +32,14 @@ func init() {
 			"@": "player",
 		},
 		metadata: make(map[string]interface{}),
-		enter: func() {
+		enter: func(r *game.Room) {
 			fmt.Println("entered spawn")
 		},
-		leave: func() {
+		leave: func(r *game.Room) {
 			fmt.Println("left spawn")
 		},
-		update: func() {
-			//
+		update: func(r *game.Room) {
+			defaultUpdate(r)
 		},
 	}
 }
