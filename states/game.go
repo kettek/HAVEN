@@ -3,21 +3,23 @@ package states
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/kettek/ebihack23/actors"
+	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/rooms"
 )
 
 type Game struct {
-	camera            *game.Camera
-	room              *game.Room
-	hoveredTileSprite *game.SpriteStack
+	camera           *game.Camera
+	room             *game.Room
+	cursorX, cursorY int
+	hoveredTile      *game.Tile
 }
 
 func (g *Game) Update() error {
 	g.camera.Update()
 	g.room.Update()
 
-	//if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
 	cx, cy := ebiten.CursorPosition()
 	x := float64(cx) / g.camera.Zoom
 	y := float64(cy) / g.camera.Zoom
@@ -27,22 +29,36 @@ func (g *Game) Update() error {
 		y += g.camera.Y - g.camera.H/2
 		px, py := g.room.GetTilePositionFromCoordinate(float64(x), float64(y))
 		rw, rh := g.room.Size()
-		if g.hoveredTileSprite != nil {
-			g.hoveredTileSprite.Highlight = false
+		if g.hoveredTile != nil {
+			if g.hoveredTile.SpriteStack != nil {
+				g.hoveredTile.SpriteStack.Highlight = false
+			}
+			g.hoveredTile = nil
 		}
 		if px >= 0 && px < rw && py >= 0 && py < rh {
-			if tile := g.room.GetTile(px, py); tile != nil && tile.SpriteStack != nil {
-				tile.SpriteStack.Highlight = true
-				g.hoveredTileSprite = tile.SpriteStack
+			g.cursorX, g.cursorY = px, py
+			if tile := g.room.GetTile(px, py); tile != nil {
+				if tile.SpriteStack != nil {
+					tile.SpriteStack.Highlight = true
+				}
+				g.hoveredTile = tile
 			}
 		} else {
-			if g.hoveredTileSprite != nil {
-				g.hoveredTileSprite.Highlight = false
-				g.hoveredTileSprite = nil
+			g.cursorX, g.cursorY = -1, -1
+		}
+	}
+
+	if g.cursorX != -1 && g.cursorY != -1 && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+		for _, actor := range g.room.Actors {
+			switch actor := actor.(type) {
+			case *actors.Player:
+				g.room.PendingCommands = append(g.room.PendingCommands, game.ActorCommand{
+					Actor: actor,
+					Cmd:   commands.Move{X: g.cursorX, Y: g.cursorY},
+				})
 			}
 		}
 	}
-	//}
 
 	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
 		g.room.ToIso()
