@@ -78,7 +78,19 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 	}
 }
 
-func (ss *SpriteStack) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
+func (ss *SpriteStack) Draw(screen *ebiten.Image, geom ebiten.GeoM, mode DrawMode, ratio float64) {
+	if mode == DrawModeIsoToFlat {
+		ss.DrawMixed(screen, geom, ratio)
+	} else if mode == DrawModeFlatToIso {
+		ss.DrawMixed(screen, geom, ratio)
+	} else if mode == DrawModeIso {
+		ss.DrawIso(screen, geom)
+	} else {
+		ss.DrawFlat(screen, geom)
+	}
+}
+
+func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM = ss.GeoM(op.GeoM)
 	op.GeoM.Concat(geom)
@@ -99,3 +111,12 @@ func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
+
+type DrawMode int
+
+const (
+	DrawModeFlat DrawMode = iota
+	DrawModeIso
+	DrawModeIsoToFlat
+	DrawModeFlatToIso
+)

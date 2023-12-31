@@ -2,7 +2,6 @@ package game
 
 import (
 	"image/color"
-	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -13,7 +12,8 @@ type Room struct {
 	droppingIn      bool
 	droppingInCount int
 	iso             bool
-	Transition      int
+	transition      int
+	drawMode        DrawMode
 	OnUpdate        func()
 	OnEnter         func()
 	OnLeave         func()
@@ -67,15 +67,17 @@ func (r *Room) Update() error {
 		}
 	}
 
-	if r.Transition > 0 {
-		r.Transition--
-		if r.Transition == 0 {
-			r.iso = true
+	if r.drawMode == DrawModeFlatToIso {
+		if r.transition > 0 {
+			r.transition--
+		} else {
+			r.drawMode = DrawModeIso
 		}
-	} else if r.Transition < 0 {
-		r.Transition++
-		if r.Transition == 0 {
-			r.iso = false
+	} else if r.drawMode == DrawModeIsoToFlat {
+		if r.transition > 0 {
+			r.transition--
+		} else {
+			r.drawMode = DrawModeFlat
 		}
 	}
 
@@ -92,6 +94,44 @@ func (r *Room) Update() error {
 	return nil
 }
 
+func (r *Room) ToIso() {
+	if r.drawMode == DrawModeIso {
+		return
+	}
+	r.transition = 60
+	r.drawMode = DrawModeFlatToIso
+}
+
+func (r *Room) ToFlat() {
+	if r.drawMode == DrawModeFlat {
+		return
+	}
+	r.transition = 60
+	r.drawMode = DrawModeIsoToFlat
+}
+
+func (r *Room) GetTilePositionGeoM(y, x int) (g ebiten.GeoM, ratio float64) {
+	if r.drawMode == DrawModeFlatToIso {
+		ratio = float64(r.transition) / 60
+		x1, y1 := GetTilePosition(y, x)
+		x2, y2 := GetTileIsoPosition(y, x)
+		x, y := x1*ratio+x2*(1-ratio), y1*ratio+y2*(1-ratio)
+		g.Translate(x, y)
+	} else if r.drawMode == DrawModeIsoToFlat {
+		ratio = float64(r.transition) / 60
+		x1, y1 := GetTilePosition(y, x)
+		x2, y2 := GetTileIsoPosition(y, x)
+		x, y := x1*(1-ratio)+x2*ratio, y1*(1-ratio)+y2*ratio
+		g.Translate(x, y)
+		ratio = 1.0 - ratio
+	} else if r.drawMode == DrawModeIso {
+		g.Translate(GetTileIsoPosition(y, x))
+	} else {
+		g.Translate(GetTilePosition(y, x))
+	}
+	return g, ratio
+}
+
 func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	screen.Fill(r.color)
 	for i := range r.Tiles {
@@ -99,36 +139,9 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			if r.Tiles[i][j].SpriteStack == nil {
 				continue
 			}
-			g := ebiten.GeoM{}
-			if r.Transition != 0 {
-				if r.Transition > 0 {
-					ratio := float64(r.Transition) / 60
-					x1, y1 := GetTilePosition(i, j)
-					x2, y2 := GetTileIsoPosition(i, j)
-					x, y := x1*ratio+x2*(1-ratio), y1*ratio+y2*(1-ratio)
-					g.Translate(x, y)
-					g.Concat(geom)
-					r.Tiles[i][j].SpriteStack.DrawMixed(screen, g, ratio)
-				} else if r.Transition < 0 {
-					ratio := math.Abs(float64(r.Transition)) / 60
-					x1, y1 := GetTilePosition(i, j)
-					x2, y2 := GetTileIsoPosition(i, j)
-					x, y := x1*(1-ratio)+x2*ratio, y1*(1-ratio)+y2*ratio
-					g.Translate(x, y)
-					g.Concat(geom)
-					r.Tiles[i][j].SpriteStack.DrawMixed(screen, g, 1.0-ratio)
-				}
-			} else {
-				if r.iso {
-					g.Translate(GetTileIsoPosition(i, j))
-					g.Concat(geom)
-					r.Tiles[i][j].SpriteStack.DrawIso(screen, g)
-				} else {
-					g.Translate(GetTilePosition(i, j))
-					g.Concat(geom)
-					r.Tiles[i][j].SpriteStack.Draw(screen, g)
-				}
-			}
+			g, ratio := r.GetTilePositionGeoM(i, j)
+			g.Concat(geom)
+			r.Tiles[i][j].SpriteStack.Draw(screen, g, r.drawMode, ratio)
 		}
 	}
 }

@@ -17,11 +17,11 @@ func (g *Game) Update() error {
 	g.room.Update()
 
 	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
-		g.room.Transition = 60
+		g.room.ToIso()
 		x, y := g.room.CenterIso()
 		g.camera.MoveTo(x, y)
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
-		g.room.Transition = -60
+		g.room.ToFlat()
 		x, y := g.room.Center()
 		g.camera.MoveTo(x, y)
 	}
