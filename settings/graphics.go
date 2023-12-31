@@ -7,4 +7,4 @@ var ClarityMode ebiten.Filter = ebiten.FilterNearest
 
 var FilterMode = ClarityMode
 
-var StackShading bool = true
+var StackShading bool = false
