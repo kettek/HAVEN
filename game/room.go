@@ -134,11 +134,11 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 }
 
 func (r *Room) Center() (float64, float64) {
-	x, y := GetTilePosition(len(r.Tiles[0])/2, len(r.Tiles)/2)
-	return x, y
+	x, y := GetTilePosition(len(r.Tiles[0]), len(r.Tiles))
+	return x / 2, y / 2
 }
 
 func (r *Room) CenterIso() (float64, float64) {
-	x, y := GetTileIsoPosition(len(r.Tiles[0])/2, len(r.Tiles)/2)
-	return x, y
+	x, y := GetTileIsoPosition(len(r.Tiles[0]), len(r.Tiles))
+	return x / 2, y / 2
 }

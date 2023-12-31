@@ -19,11 +19,14 @@ type Room struct {
 
 func (r *Room) ToGameRoom() *game.Room {
 	lines := strings.Split(r.tiles, "\n")
+	lines = lines[1:]
 	width := 0
-	for _, line := range lines {
-		if len(line) > width {
-			width = len(line)
+	for i, line := range lines {
+		c := strings.TrimLeft(line, "\t")
+		if len(c) > width {
+			width = len(c)
 		}
+		lines[i] = c
 	}
 	height := len(lines)
 	g := game.NewRoom(width, height)
@@ -33,7 +36,7 @@ func (r *Room) ToGameRoom() *game.Room {
 
 	for y, line := range lines {
 		for x, char := range line {
-			if char == ' ' {
+			if char == ' ' || char == '\t' {
 				continue
 			}
 			tile, ok := r.tileMap[string(char)]

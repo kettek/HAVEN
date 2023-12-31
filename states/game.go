@@ -19,11 +19,11 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
 		g.room.Transition = 60
 		x, y := g.room.CenterIso()
-		g.camera.CenterTo(x*3.0, y*3.0)
+		g.camera.MoveTo(x, y)
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
 		g.room.Transition = -60
 		x, y := g.room.Center()
-		g.camera.CenterTo(x*3.0, y*3.0)
+		g.camera.MoveTo(x, y)
 	}
 
 	return nil
@@ -42,11 +42,11 @@ func (g *Game) Leave() {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	geom := ebiten.GeoM{}
-	geom.Scale(3, 3)
 
-	geom.Translate(-g.camera.X, -g.camera.Y)
 	geom.Translate(-g.camera.W/2, -g.camera.H/2)
 	geom.Rotate(g.camera.Rotation)
 	geom.Translate(g.camera.W/2, g.camera.H/2)
+	geom.Translate(-g.camera.X+g.camera.W/2, -g.camera.Y+g.camera.H/2)
+	geom.Scale(g.camera.Zoom, g.camera.Zoom)
 	g.room.Draw(screen, geom)
 }

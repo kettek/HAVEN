@@ -12,6 +12,7 @@ type Camera struct {
 	Y                  float64
 	W                  float64
 	H                  float64
+	Zoom               float64
 	pendingX, pendingY float64
 	targetX, targetY   float64
 	targetTicker       int
@@ -21,8 +22,9 @@ type Camera struct {
 func NewCamera() *Camera {
 	w, h := ebiten.WindowSize()
 	return &Camera{
-		W: float64(w),
-		H: float64(h),
+		W:    float64(w) / 3,
+		H:    float64(h) / 3,
+		Zoom: 3.0,
 	}
 }
 
@@ -37,22 +39,22 @@ func (c *Camera) MoveTo(x, y float64) {
 func (c *Camera) CenterTo(x, y float64) {
 	c.pendingX = c.X
 	c.pendingY = c.Y
-	c.targetX = x - c.W/2
-	c.targetY = y - c.H/2
+	c.targetX = x - c.W
+	c.targetY = y - c.H
 	c.targetTicker = 0
 }
 
 func (c *Camera) CenterOn(x, y float64) {
-	c.X = x - c.W/2
-	c.Y = y - c.H/2
+	c.X = x - c.W
+	c.Y = y - c.H
 	c.CenterTo(c.X, c.Y)
 }
 
 func (c *Camera) Update() error {
 	c.ticker++
 	w, h := ebiten.WindowSize()
-	c.W = float64(w)
-	c.H = float64(h)
+	c.W = float64(w) / c.Zoom
+	c.H = float64(h) / c.Zoom
 
 	if c.targetX != c.pendingX || c.targetY != c.pendingY {
 		c.targetTicker++
