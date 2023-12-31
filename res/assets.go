@@ -27,7 +27,10 @@ func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	}
 	b, err := FS.ReadFile(sprite + ".png")
 	if err != nil {
-		return nil, err
+		b, err = FS.ReadFile("missing.png")
+		if err != nil {
+			return nil, err
+		}
 	}
 	img, _, err := image.Decode(bytes.NewReader(b))
 	if err != nil {

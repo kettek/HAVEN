@@ -7,20 +7,22 @@ import (
 )
 
 type Tile struct {
-	spriteStack *SpriteStack
-	ticker      int
-	glitchion   float64
-	rotation    float64
+	SpriteStack *SpriteStack
+	Ticker      int
+	Glitchion   float64
+	Rotation    float64
 }
 
 func (t *Tile) Update() {
-	t.ticker++
-	if t.glitchion == 0 {
-		t.rotation = 0
+	t.Ticker++
+	if t.Glitchion == 0 {
+		t.Rotation = 0
 	} else {
-		t.rotation = math.Cos(float64(t.ticker)/t.glitchion) / t.glitchion
+		t.Rotation = math.Cos(float64(t.Ticker)/t.Glitchion) / t.Glitchion
 	}
-	t.spriteStack.rotation = t.rotation
+	if t.SpriteStack != nil {
+		t.SpriteStack.Rotation = t.Rotation
+	}
 }
 
 func GetTileIsoPosition(x, y int) (float64, float64) {

@@ -10,14 +10,14 @@ import (
 type SpriteStack struct {
 	layers        []*ebiten.Image
 	layerDistance float64
-	alpha         float32
-	rotation      float64
+	Alpha         float32
+	Rotation      float64
 }
 
 func NewSpriteStack(sprite string) *SpriteStack {
 	ss := &SpriteStack{
 		layerDistance: -1,
-		alpha:         1.0,
+		Alpha:         1.0,
 	}
 
 	layers, err := res.LoadSpriteStack(sprite)
@@ -33,14 +33,14 @@ func (ss *SpriteStack) IsoGeoM(geom ebiten.GeoM) ebiten.GeoM {
 	geom.Rotate(math.Pi / 4)
 	geom.Scale(1, 0.5)
 	geom.Translate(-res.TileHalfWidth, -res.TileHalfHeight)
-	geom.Rotate(ss.rotation)
+	geom.Rotate(ss.Rotation)
 	geom.Translate(res.TileHalfWidth, res.TileHalfHeight)
 	return geom
 }
 
 func (ss *SpriteStack) GeoM(geom ebiten.GeoM) ebiten.GeoM {
 	geom.Translate(-res.TileHalfWidth, -res.TileHalfHeight)
-	geom.Rotate(ss.rotation)
+	geom.Rotate(ss.Rotation)
 	geom.Translate(res.TileHalfWidth, res.TileHalfHeight)
 	return geom
 }
@@ -73,7 +73,7 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 
 	for i := 0; i < len(ss.layers); i++ {
 		op.GeoM.Translate(0, ss.layerDistance*(1-ratio))
-		op.ColorScale.ScaleAlpha(ss.alpha)
+		op.ColorScale.ScaleAlpha(ss.Alpha)
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
@@ -84,7 +84,7 @@ func (ss *SpriteStack) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	op.GeoM.Concat(geom)
 	for i := 0; i < len(ss.layers); i++ {
 		//op.GeoM.Translate(0, ss.layerDistance)
-		op.ColorScale.ScaleAlpha(ss.alpha)
+		op.ColorScale.ScaleAlpha(ss.Alpha)
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
@@ -95,7 +95,7 @@ func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
 	op.GeoM.Concat(geom)
 	for i := 0; i < len(ss.layers); i++ {
 		op.GeoM.Translate(0, ss.layerDistance)
-		op.ColorScale.ScaleAlpha(ss.alpha)
+		op.ColorScale.ScaleAlpha(ss.Alpha)
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
