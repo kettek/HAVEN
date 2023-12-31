@@ -14,12 +14,14 @@ type SpriteStack struct {
 	Alpha         float32
 	Rotation      float64
 	Highlight     bool
+	Shaded        bool
 }
 
 func NewSpriteStack(sprite string) *SpriteStack {
 	ss := &SpriteStack{
 		LayerDistance: -1,
 		Alpha:         1.0,
+		//Shaded:        true,
 	}
 
 	layers, err := res.LoadSpriteStack(sprite)
@@ -78,8 +80,16 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 	}
 
 	for i := 0; i < len(ss.layers); i++ {
+		op.ColorScale.Reset()
 		op.GeoM.Translate(0, ss.LayerDistance*(1-ratio))
-		op.ColorScale.ScaleAlpha(ss.Alpha)
+		if ss.Highlight {
+			op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
+		}
+		if ss.Shaded {
+			r := float64(i) / float64(len(ss.layers)-1)
+			c := uint8(200.0 + 55*r)
+			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
+		}
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
@@ -104,8 +114,17 @@ func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
 		op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
 	}
 	for i := 0; i < len(ss.layers); i++ {
-		//op.GeoM.Translate(0, ss.LayerDistance)
+		op.ColorScale.Reset()
+		/*if ss.Highlight {
+			op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
+		}
+		if ss.Shaded {
+			r := float64(i) / float64(len(ss.layers)-1)
+			c := uint8(200.0 + 55*r)
+			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
+		}*/
 		op.ColorScale.ScaleAlpha(ss.Alpha)
+
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
@@ -114,12 +133,18 @@ func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM = ss.IsoGeoM(op.GeoM)
 	op.GeoM.Concat(geom)
-	if ss.Highlight {
-		op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
-	}
 	for i := 0; i < len(ss.layers); i++ {
+		op.ColorScale.Reset()
 		op.GeoM.Translate(0, ss.LayerDistance)
 		op.ColorScale.ScaleAlpha(ss.Alpha)
+		if ss.Highlight {
+			op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
+		}
+		if ss.Shaded {
+			r := float64(i) / float64(len(ss.layers)-1)
+			c := uint8(200.0 + 55*r)
+			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
+		}
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
