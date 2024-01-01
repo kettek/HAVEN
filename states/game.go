@@ -1,6 +1,8 @@
 package states
 
 import (
+	"fmt"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebihack23/actors"
@@ -15,11 +17,32 @@ type Game struct {
 	room             *game.Room
 	cursorX, cursorY int
 	hoveredTile      *game.Tile
+	enterChan        chan struct{}
+	processChan      chan func() bool
+	entering         bool
+}
+
+func NewGame() *Game {
+	return &Game{
+		enterChan:   make(chan struct{}),
+		processChan: make(chan func() bool),
+	}
 }
 
 func (g *Game) Update() error {
 	g.camera.Update()
+
 	g.room.Update()
+
+	if g.entering {
+		select {
+		case <-g.enterChan:
+			g.entering = false
+		default:
+			return nil
+		}
+		fmt.Println("done")
+	}
 
 	cx, cy := ebiten.CursorPosition()
 	x := float64(cx) / g.camera.Zoom
@@ -90,7 +113,11 @@ func (g *Game) Enter() {
 	}
 	if g.room == nil {
 		g.room = rooms.BuildRoom("000_spawn")
-		g.room.OnEnter(g.room)
+		go func() {
+			g.entering = true
+			g.room.OnEnter(g.room)
+			g.enterChan <- struct{}{}
+		}()
 	}
 }
 func (g *Game) Leave() {

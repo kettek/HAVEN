@@ -7,9 +7,12 @@ import (
 	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 )
 
 //go:embed *.png
+//go:embed *.ttf
 var FS embed.FS
 
 var loadedSpriteStacks = make(map[string][]*ebiten.Image)
@@ -20,6 +23,7 @@ var TileHalfWidth = 6.0
 var TileHalfHeight = 6.0
 var TileYStep = 9.0
 var TileXStep = 4.5
+var FontName = "x16y32pxGridGazer.ttf"
 
 func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	if layers, ok := loadedSpriteStacks[sprite]; ok {
@@ -45,4 +49,25 @@ func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	}
 	loadedSpriteStacks[sprite] = layers
 	return layers, nil
+}
+
+var Font font.Face
+
+func init() {
+	b, err := FS.ReadFile(FontName)
+	if err != nil {
+		panic(err)
+	}
+	tt, err := opentype.Parse(b)
+	if err != nil {
+		panic(err)
+	}
+	Font, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    32,
+		DPI:     72,
+		Hinting: font.HintingNone,
+	})
+	if err != nil {
+		panic(err)
+	}
 }

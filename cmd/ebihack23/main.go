@@ -22,7 +22,7 @@ func main() {
 	// Start dat gizame.
 	g := &ebihack{}
 
-	states.NextState(&states.Game{})
+	states.NextState(states.NewGame())
 
 	if err := ebiten.RunGame(g); err != nil {
 		panic(err)
