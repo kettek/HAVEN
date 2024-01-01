@@ -23,7 +23,8 @@ var TileHalfWidth = 6.0
 var TileHalfHeight = 6.0
 var TileYStep = 9.0
 var TileXStep = 4.5
-var FontName = "x16y32pxGridGazer.ttf"
+var BigFontName = "x16y32pxGridGazer.ttf"
+var DefFontName = "x12y16pxLineLinker.ttf"
 
 func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	if layers, ok := loadedSpriteStacks[sprite]; ok {
@@ -51,10 +52,11 @@ func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	return layers, nil
 }
 
+var BigFont font.Face
 var Font font.Face
 
 func init() {
-	b, err := FS.ReadFile(FontName)
+	b, err := FS.ReadFile(BigFontName)
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +64,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	Font, err = opentype.NewFace(tt, &opentype.FaceOptions{
+	BigFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
 		Size:    32,
 		DPI:     72,
 		Hinting: font.HintingNone,
@@ -70,4 +72,21 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	b, err = FS.ReadFile(DefFontName)
+	if err != nil {
+		panic(err)
+	}
+	tt, err = opentype.Parse(b)
+	if err != nil {
+		panic(err)
+	}
+	Font, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    16,
+		DPI:     72,
+		Hinting: font.HintingNone,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 }

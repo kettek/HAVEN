@@ -10,6 +10,9 @@ type Actor interface {
 	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode, ratio float64)
 	Position() (int, int)
 	SetPosition(x, y int)
+	Hover(bool)
+	Hovered() bool
+	Name() string
 }
 
 type ActorCommand struct {

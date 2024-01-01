@@ -25,14 +25,22 @@ func (p *Player) Command(cmd commands.Command) {
 
 func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 	// FIXME: This isn't supposed to be here.
+	var x, y int
 	if inpututil.IsKeyJustReleased(ebiten.KeyLeft) {
-		return commands.Move{X: p.X - 1, Y: p.Y}
+		x = -1
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyRight) {
-		return commands.Move{X: p.X + 1, Y: p.Y}
+		x = 1
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
-		return commands.Move{X: p.X, Y: p.Y - 1}
+		y = -1
 	} else if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
-		return commands.Move{X: p.X, Y: p.Y + 1}
+		y = 1
+	}
+	if x != 0 || y != 0 {
+		if ebiten.IsKeyPressed(ebiten.KeyShift) {
+			return commands.Investigate{X: p.X + x, Y: p.Y + y}
+		} else {
+			return commands.Move{X: p.X + x, Y: p.Y + y}
+		}
 	}
 
 	if p.moving {
@@ -57,6 +65,22 @@ func (p *Player) SetPosition(x, y int) {
 	p.Y = y
 	p.targetX = x
 	p.targetY = y
+}
+
+func (p *Player) Hover(h bool) {
+	if h {
+		p.spriteStack.Highlight = true
+	} else {
+		p.spriteStack.Highlight = false
+	}
+}
+
+func (p *Player) Hovered() bool {
+	return p.spriteStack.Highlight
+}
+
+func (p *Player) Name() string {
+	return "player"
 }
 
 func init() {

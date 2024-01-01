@@ -1,11 +1,13 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/res"
 )
 
@@ -141,7 +143,49 @@ func (r *Room) Update() error {
 		r.OnUpdate(r)
 	}
 
+	r.HandlePendingCommands()
+
 	return nil
+}
+
+func (r *Room) HandlePendingCommands() {
+	for _, cmd := range r.PendingCommands {
+		switch c := cmd.Cmd.(type) {
+		case commands.Move:
+			ax, ay := cmd.Actor.Position()
+			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
+				// First check if an actor is there.
+				if actor := r.GetActor(c.X, c.Y); actor != nil {
+					go r.MessageR(Message{Text: "something is there", Duration: 1 * time.Second})
+					continue
+				}
+				if tile := r.GetTile(c.X, c.Y); tile != nil {
+					if tile.SpriteStack == nil {
+						go r.MessageR(Message{Text: "the void gazes at you", Duration: 1 * time.Second})
+					} else if !tile.BlocksMove {
+						cmd.Actor.SetPosition(c.X, c.Y)
+					} else {
+						go r.MessageR(Message{Text: "the way is blocked", Duration: 1 * time.Second})
+					}
+				} else {
+					go r.MessageR(Message{Text: "impossible", Duration: 1 * time.Second})
+				}
+			}
+		case commands.Investigate:
+			if actor := r.GetActor(c.X, c.Y); actor != nil {
+				go r.MessageR(Message{Text: fmt.Sprintf("i see thing <%s>", actor.Name()), Duration: 1 * time.Second})
+				continue
+			}
+			if tile := r.GetTile(c.X, c.Y); tile != nil && tile.Name != "" {
+				go r.MessageR(Message{Text: fmt.Sprintf("i see <%s>", tile.Name), Duration: 1 * time.Second})
+				continue
+			}
+			go r.MessageR(Message{Text: "i see nil", Duration: 1 * time.Second})
+		default:
+			fmt.Println("handle", cmd.Actor, "wants to", cmd.Cmd)
+		}
+	}
+	r.PendingCommands = nil
 }
 
 func (r *Room) ToIso() {
@@ -203,7 +247,7 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 
 	if len(r.Messages) > 0 {
 		m := r.Messages[0]
-		text.Draw(screen, m.Text, res.Font, 16, 32, m.Color)
+		text.Draw(screen, m.Text, m.Font, 16, 32, m.Color)
 	}
 }
 
@@ -236,6 +280,16 @@ func (r *Room) GetTile(x, y int) *Tile {
 	return &r.Tiles[y][x]
 }
 
+func (r *Room) GetActor(x, y int) Actor {
+	for _, a := range r.Actors {
+		ax, ay := a.Position()
+		if ax == x && ay == y {
+			return a
+		}
+	}
+	return nil
+}
+
 func (r *Room) SetColor(c color.NRGBA) {
 	r.targetColor = c
 	r.colorTicker = 60
@@ -247,6 +301,9 @@ func (r *Room) MessageR(m Message) bool {
 	m.id = messageID
 	if m.Color.A == 0 {
 		m.Color = color.NRGBA{0, 0, 0, 255}
+	}
+	if m.Font == nil {
+		m.Font = res.Font
 	}
 	messageID++
 	first := true

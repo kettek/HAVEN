@@ -7,7 +7,9 @@ import (
 )
 
 type Tile struct {
+	Name        string
 	SpriteStack *SpriteStack
+	BlocksMove  bool
 	Ticker      int
 	Glitchion   float64
 	Rotation    float64

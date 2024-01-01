@@ -17,6 +17,7 @@ type Game struct {
 	room             *game.Room
 	cursorX, cursorY int
 	hoveredTile      *game.Tile
+	hoveredActor     game.Actor
 	enterChan        chan struct{}
 	processChan      chan func() bool
 	entering         bool
@@ -59,6 +60,10 @@ func (g *Game) Update() error {
 			}
 			g.hoveredTile = nil
 		}
+		if g.hoveredActor != nil {
+			g.hoveredActor.Hover(false)
+			g.hoveredActor = nil
+		}
 		if px >= 0 && px < rw && py >= 0 && py < rh {
 			g.cursorX, g.cursorY = px, py
 			if tile := g.room.GetTile(px, py); tile != nil {
@@ -67,19 +72,40 @@ func (g *Game) Update() error {
 				}
 				g.hoveredTile = tile
 			}
+			if actor := g.room.GetActor(px, py); actor != nil {
+				actor.Hover(true)
+				g.hoveredActor = actor
+			}
 		} else {
 			g.cursorX, g.cursorY = -1, -1
 		}
 	}
 
-	if g.cursorX != -1 && g.cursorY != -1 && inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
-		for _, actor := range g.room.Actors {
-			switch actor := actor.(type) {
-			case *actors.Player:
-				g.room.PendingCommands = append(g.room.PendingCommands, game.ActorCommand{
-					Actor: actor,
-					Cmd:   commands.Move{X: g.cursorX, Y: g.cursorY},
-				})
+	if g.cursorX != -1 && g.cursorY != -1 {
+		lmb := false
+		rmb := false
+		if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+			lmb = true
+		}
+		if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
+			rmb = true
+		}
+		if lmb || rmb {
+			for _, actor := range g.room.Actors {
+				switch actor := actor.(type) {
+				case *actors.Player:
+					if rmb {
+						g.room.PendingCommands = append(g.room.PendingCommands, game.ActorCommand{
+							Actor: actor,
+							Cmd:   commands.Move{X: g.cursorX, Y: g.cursorY},
+						})
+					} else if lmb {
+						g.room.PendingCommands = append(g.room.PendingCommands, game.ActorCommand{
+							Actor: actor,
+							Cmd:   commands.Investigate{X: g.cursorX, Y: g.cursorY},
+						})
+					}
+				}
 			}
 		}
 	}

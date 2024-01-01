@@ -3,6 +3,8 @@ package game
 import (
 	"image/color"
 	"time"
+
+	"golang.org/x/image/font"
 )
 
 type Message struct {
@@ -11,6 +13,7 @@ type Message struct {
 	Color    color.NRGBA
 	X        int
 	Y        int
+	Font     font.Face
 	start    time.Time
 	id       int
 }

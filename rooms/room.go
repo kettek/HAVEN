@@ -9,7 +9,7 @@ import (
 
 type Room struct {
 	tiles     string
-	tileMap   map[string]string
+	tileDefs  TileDefs
 	entities  string
 	entityMap map[string]string
 	metadata  map[string]interface{}
@@ -40,11 +40,13 @@ func (r *Room) ToGameRoom() *game.Room {
 			if char == ' ' || char == '\t' {
 				continue
 			}
-			tile, ok := r.tileMap[string(char)]
+			tileDef, ok := r.tileDefs[string(char)]
 			if !ok {
 				continue
 			}
-			g.Tiles[y][x].SpriteStack = game.NewSpriteStack(tile)
+			g.Tiles[y][x].SpriteStack = game.NewSpriteStack(tileDef.Sprite)
+			g.Tiles[y][x].BlocksMove = tileDef.BlocksMove
+			g.Tiles[y][x].Name = tileDef.Name
 		}
 	}
 
@@ -52,20 +54,16 @@ func (r *Room) ToGameRoom() *game.Room {
 	lines = strings.Split(r.entities, "\n")
 	lines = lines[1 : len(lines)-1]
 	for y, line := range lines {
-		rx := 1
-		for _, char := range line {
-			if char == '\t' {
-				continue
-			}
+		l := strings.TrimLeft(line, "\t")
+		for x, char := range l {
 			if char == ' ' {
 				continue
 			}
-			rx++
 			entity, ok := r.entityMap[string(char)]
 			if !ok {
 				continue
 			}
-			actor := actors.New(entity, rx, y)
+			actor := actors.New(entity, x, y)
 			if actor == nil {
 				continue
 			}
