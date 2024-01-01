@@ -35,11 +35,11 @@ func NewSpriteStack(sprite string) *SpriteStack {
 }
 
 func (ss *SpriteStack) IsoGeoM(geom ebiten.GeoM) ebiten.GeoM {
-	geom.Rotate(math.Pi / 4)
-	geom.Scale(1, 0.5)
 	geom.Translate(-res.TileHalfWidth, -res.TileHalfHeight)
 	geom.Rotate(ss.Rotation)
 	geom.Translate(res.TileHalfWidth, res.TileHalfHeight)
+	geom.Rotate(math.Pi / 4)
+	geom.Scale(1, 0.5)
 	return geom
 }
 
