@@ -172,15 +172,20 @@ func (r *Room) HandlePendingCommands() {
 				}
 			}
 		case commands.Investigate:
+			ax, ay := cmd.Actor.Position()
+			s := "feel"
+			if ax-c.X < -1 || ax-c.X > 1 || ay-c.Y < -1 || ay-c.Y > 1 {
+				s = "see"
+			}
 			if actor := r.GetActor(c.X, c.Y); actor != nil {
-				go r.MessageR(Message{Text: fmt.Sprintf("i see thing <%s>", actor.Name()), Duration: 1 * time.Second})
+				go r.MessageR(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second})
 				continue
 			}
 			if tile := r.GetTile(c.X, c.Y); tile != nil && tile.Name != "" {
-				go r.MessageR(Message{Text: fmt.Sprintf("i see <%s>", tile.Name), Duration: 1 * time.Second})
+				go r.MessageR(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second})
 				continue
 			}
-			go r.MessageR(Message{Text: "i see nil", Duration: 1 * time.Second})
+			go r.MessageR(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second})
 		default:
 			fmt.Println("handle", cmd.Actor, "wants to", cmd.Cmd)
 		}
