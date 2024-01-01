@@ -8,11 +8,10 @@ import (
 )
 
 type Player struct {
-	X, Y               int
-	moving             bool
-	targetX, targetY   int
-	pendingX, pendingY float64
-	spriteStack        *game.SpriteStack
+	X, Y             int
+	movingTicker     int
+	targetX, targetY int
+	spriteStack      *game.SpriteStack
 }
 
 func (p *Player) Command(cmd commands.Command) {
@@ -24,6 +23,15 @@ func (p *Player) Command(cmd commands.Command) {
 }
 
 func (p *Player) Update(room *game.Room) (cmd commands.Command) {
+	if p.movingTicker > 0 {
+		p.movingTicker--
+		if p.movingTicker == 0 {
+			p.X = p.targetX
+			p.Y = p.targetY
+		}
+		return nil
+	}
+
 	// FIXME: This isn't supposed to be here.
 	var x, y int
 	if inpututil.IsKeyJustReleased(ebiten.KeyLeft) {
@@ -42,18 +50,25 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 			return commands.Move{X: p.X + x, Y: p.Y + y}
 		}
 	}
-
-	if p.moving {
-		p.X = p.targetX
-		p.Y = p.targetY
-		// TODO: increase pendingX/pendingY until targetX/targetY is reached.
-		p.moving = false
-	}
 	return nil
 }
 
-func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode, ratio float64) {
-	p.spriteStack.Draw(screen, geom, drawMode, ratio)
+func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
+	var g ebiten.GeoM
+	var ratio float64
+	if p.movingTicker > 0 {
+		moveRatio := float64(p.movingTicker) / 10
+		g2, _ := r.GetTilePositionGeoM(p.X, p.Y)
+		g1, _ := r.GetTilePositionGeoM(p.targetX, p.targetY)
+		g.SetElement(0, 2, g1.Element(0, 2)*(1-moveRatio)+g2.Element(0, 2)*(moveRatio))
+		g.SetElement(1, 2, g1.Element(1, 2)*(1-moveRatio)+g2.Element(1, 2)*(moveRatio))
+	} else {
+		g, ratio = r.GetTilePositionGeoM(p.X, p.Y)
+	}
+
+	g.Concat(geom)
+
+	p.spriteStack.Draw(screen, g, drawMode, ratio)
 }
 
 func (p *Player) Position() (int, int) {
@@ -61,8 +76,7 @@ func (p *Player) Position() (int, int) {
 }
 
 func (p *Player) SetPosition(x, y int) {
-	p.X = x
-	p.Y = y
+	p.movingTicker = 10
 	p.targetX = x
 	p.targetY = y
 }

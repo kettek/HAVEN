@@ -7,7 +7,7 @@ import (
 
 type Actor interface {
 	Update(r *Room) (cmd commands.Command)
-	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode, ratio float64)
+	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
 	Position() (int, int)
 	SetPosition(x, y int)
 	Hover(bool)

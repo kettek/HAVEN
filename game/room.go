@@ -254,10 +254,7 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		}
 	}
 	for _, a := range r.Actors {
-		x, y := a.Position()
-		g, ratio := r.GetTilePositionGeoM(x, y)
-		g.Concat(geom)
-		a.Draw(screen, r, g, r.drawMode, ratio)
+		a.Draw(screen, r, geom, r.drawMode)
 	}
 
 	for _, m := range r.TileMessages {

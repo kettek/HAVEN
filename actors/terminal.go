@@ -27,8 +27,10 @@ func (p *Terminal) Update(room *game.Room) (cmd commands.Command) {
 	return nil
 }
 
-func (p *Terminal) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode, ratio float64) {
-	p.spriteStack.Draw(screen, geom, drawMode, ratio)
+func (p *Terminal) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
+	g, ratio := r.GetTilePositionGeoM(p.X, p.Y)
+	g.Concat(geom)
+	p.spriteStack.Draw(screen, g, drawMode, ratio)
 }
 
 func (p *Terminal) Position() (int, int) {
