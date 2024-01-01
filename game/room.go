@@ -269,7 +269,6 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		g.Translate(gx, gy)
 		op.GeoM = g
 		text.DrawWithOptions(screen, m.Text, m.Font, op)
-		fmt.Println("drawing message", m.Text, op.GeoM)
 	}
 
 	if len(r.Messages) > 0 {
