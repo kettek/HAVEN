@@ -1,6 +1,8 @@
 package actors
 
 import (
+	"math"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebihack23/commands"
@@ -44,6 +46,17 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 		y = 1
 	}
 	if x != 0 || y != 0 {
+		// For now, because I'm lazy, face the direction we're acting towards.
+		// FIXME: Move this elsewhere!
+		if x < 0 {
+			p.spriteStack.Rotation = math.Pi * 3 / 2
+		} else if x > 0 {
+			p.spriteStack.Rotation = math.Pi / 2
+		} else if y < 0 {
+			p.spriteStack.Rotation = 0
+		} else if y > 0 {
+			p.spriteStack.Rotation = math.Pi
+		}
 		if ebiten.IsKeyPressed(ebiten.KeyShift) {
 			return commands.Investigate{X: p.X + x, Y: p.Y + y}
 		} else {
