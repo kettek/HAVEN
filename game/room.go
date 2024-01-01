@@ -16,6 +16,7 @@ type Room struct {
 	Actors          []Actor
 	PendingCommands []ActorCommand
 	Messages        []Message
+	TileMessages    []Message
 	Color           color.NRGBA
 	targetColor     color.NRGBA
 	colorTicker     int
@@ -145,6 +146,15 @@ func (r *Room) Update() error {
 
 	r.HandlePendingCommands()
 
+	// Process small messages.
+	messages := r.TileMessages[:0]
+	for _, m := range r.TileMessages {
+		if time.Since(m.start) < m.Duration {
+			messages = append(messages, m)
+		}
+	}
+	r.TileMessages = messages
+
 	return nil
 }
 
@@ -156,19 +166,19 @@ func (r *Room) HandlePendingCommands() {
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil {
-					go r.MessageR(Message{Text: "something is there", Duration: 1 * time.Second})
+					go r.TileMessageR(Message{Text: "something is there", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					continue
 				}
 				if tile := r.GetTile(c.X, c.Y); tile != nil {
 					if tile.SpriteStack == nil {
-						go r.MessageR(Message{Text: "the void gazes at you", Duration: 1 * time.Second})
+						go r.TileMessageR(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					} else if !tile.BlocksMove {
 						cmd.Actor.SetPosition(c.X, c.Y)
 					} else {
-						go r.MessageR(Message{Text: "the way is blocked", Duration: 1 * time.Second})
+						go r.TileMessageR(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					}
 				} else {
-					go r.MessageR(Message{Text: "impossible", Duration: 1 * time.Second})
+					go r.TileMessageR(Message{Text: "impossible", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 				}
 			}
 		case commands.Investigate:
@@ -178,14 +188,14 @@ func (r *Room) HandlePendingCommands() {
 				s = "see"
 			}
 			if actor := r.GetActor(c.X, c.Y); actor != nil {
-				go r.MessageR(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second})
+				go r.TileMessageR(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 				continue
 			}
 			if tile := r.GetTile(c.X, c.Y); tile != nil && tile.Name != "" {
-				go r.MessageR(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second})
+				go r.TileMessageR(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 				continue
 			}
-			go r.MessageR(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second})
+			go r.TileMessageR(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 		default:
 			fmt.Println("handle", cmd.Actor, "wants to", cmd.Cmd)
 		}
@@ -248,6 +258,21 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		g, ratio := r.GetTilePositionGeoM(x, y)
 		g.Concat(geom)
 		a.Draw(screen, r, g, r.drawMode, ratio)
+	}
+
+	for _, m := range r.TileMessages {
+		op := &ebiten.DrawImageOptions{}
+		//op.ColorScale.SetR(float32(m.Color.R) / 255)
+		//op.ColorScale.SetG(float32(m.Color.G) / 255)
+		//op.ColorScale.SetB(float32(m.Color.B) / 255)
+		//op.ColorScale.SetA(1.0 - float32(float64(time.Since(m.start))/float64(m.Duration)))
+		g, _ := r.GetTilePositionGeoM(m.X, m.Y)
+		gx := geom.Element(0, 2)
+		gy := geom.Element(1, 2)
+		g.Translate(gx, gy)
+		op.GeoM = g
+		text.DrawWithOptions(screen, m.Text, m.Font, op)
+		fmt.Println("drawing message", m.Text, op.GeoM)
 	}
 
 	if len(r.Messages) > 0 {
@@ -323,6 +348,24 @@ func (r *Room) MessageR(m Message) bool {
 			return true
 		}
 		return false
+	}
+	r.ProcessChan <- fnc
+	return <-done
+}
+
+func (r *Room) TileMessageR(m Message) bool {
+	done := make(chan bool)
+	m.start = time.Now()
+	if m.Color.A == 0 {
+		m.Color = color.NRGBA{0, 0, 0, 255}
+	}
+	if m.Font == nil {
+		m.Font = res.Font
+	}
+	fnc := func() bool {
+		r.TileMessages = append(r.TileMessages, m)
+		done <- true
+		return true
 	}
 	r.ProcessChan <- fnc
 	return <-done

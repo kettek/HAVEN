@@ -25,6 +25,7 @@ var TileYStep = 9.0
 var TileXStep = 4.5
 var BigFontName = "x16y32pxGridGazer.ttf"
 var DefFontName = "x12y16pxLineLinker.ttf"
+var SmallFontName = "x8y12pxTheStrongGamer.ttf"
 
 func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	if layers, ok := loadedSpriteStacks[sprite]; ok {
@@ -54,6 +55,7 @@ func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 
 var BigFont font.Face
 var Font font.Face
+var SmallFont font.Face
 
 func init() {
 	b, err := FS.ReadFile(BigFontName)
@@ -88,5 +90,20 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
+	b, err = FS.ReadFile(SmallFontName)
+	if err != nil {
+		panic(err)
+	}
+	tt, err = opentype.Parse(b)
+	if err != nil {
+		panic(err)
+	}
+	SmallFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    12,
+		DPI:     72,
+		Hinting: font.HintingNone,
+	})
+	if err != nil {
+		panic(err)
+	}
 }
