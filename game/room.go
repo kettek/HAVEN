@@ -354,6 +354,12 @@ func (r *Room) DropInR() chan bool {
 					r.Tiles[i][j].SpriteStack.Alpha = 1
 				}
 			}
+			for _, a := range r.Actors {
+				if sp := a.SpriteStack(); sp != nil {
+					sp.LayerDistance = -1
+					sp.Alpha = 1
+				}
+			}
 			done <- true
 			return true
 		} else {
@@ -364,6 +370,12 @@ func (r *Room) DropInR() chan bool {
 					}
 					r.Tiles[i][j].SpriteStack.LayerDistance = -1 + (1.0-float64(count)/60)*-10
 					r.Tiles[i][j].SpriteStack.Alpha = float32(count) / 60
+				}
+			}
+			for _, a := range r.Actors {
+				if sp := a.SpriteStack(); sp != nil {
+					sp.LayerDistance = -1 + (1.0-float64(count)/60)*-10
+					sp.Alpha = float32(count) / 60
 				}
 			}
 			return false
