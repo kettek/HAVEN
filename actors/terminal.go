@@ -60,6 +60,10 @@ func (p *Terminal) Name() string {
 	return "terminal"
 }
 
+func (p *Terminal) SpriteStack() *game.SpriteStack {
+	return p.spriteStack
+}
+
 func init() {
 	actors["terminal"] = func(x, y int) game.Actor {
 		ss := game.NewSpriteStack("terminal")

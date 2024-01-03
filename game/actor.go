@@ -13,6 +13,7 @@ type Actor interface {
 	Hover(bool)
 	Hovered() bool
 	Name() string
+	SpriteStack() *SpriteStack
 }
 
 type ActorCommand struct {
