@@ -238,8 +238,15 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		a.Draw(screen, r, geom, r.drawMode)
 	}
 
+	lastX, lastY := -1, -1
 	for _, m := range r.TileMessages {
 		g, _ := r.GetTilePositionGeoM(m.X, m.Y)
+		fmt.Println(m.X, m.Y, m.Text)
+		if m.X == lastX && m.Y == lastY {
+			g.Translate(0, -4)
+		}
+		lastX = m.X
+		lastY = m.Y
 		g.Concat(geom)
 		gx := g.Element(0, 2)
 		gy := g.Element(1, 2)
