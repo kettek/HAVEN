@@ -239,17 +239,11 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	}
 
 	for _, m := range r.TileMessages {
-		op := &ebiten.DrawImageOptions{}
-		//op.ColorScale.SetR(float32(m.Color.R) / 255)
-		//op.ColorScale.SetG(float32(m.Color.G) / 255)
-		//op.ColorScale.SetB(float32(m.Color.B) / 255)
-		//op.ColorScale.SetA(1.0 - float32(float64(time.Since(m.start))/float64(m.Duration)))
 		g, _ := r.GetTilePositionGeoM(m.X, m.Y)
-		gx := geom.Element(0, 2)
-		gy := geom.Element(1, 2)
-		g.Translate(gx, gy)
-		op.GeoM = g
-		text.DrawWithOptions(screen, m.Text, m.Font, op)
+		g.Concat(geom)
+		gx := g.Element(0, 2)
+		gy := g.Element(1, 2)
+		text.Draw(screen, m.Text, m.Font, int(gx), int(gy), m.Color)
 	}
 }
 
@@ -300,7 +294,7 @@ func (r *Room) SetColor(c color.NRGBA) {
 func (r *Room) TileMessage(m Message) {
 	m.start = time.Now()
 	if m.Color.A == 0 {
-		m.Color = color.NRGBA{0, 0, 0, 255}
+		m.Color = color.NRGBA{255, 255, 255, 255}
 	}
 	if m.Font == nil {
 		m.Font = res.Font
