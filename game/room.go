@@ -26,14 +26,14 @@ type Room struct {
 	OnUpdate        func(*World, *Room)
 	OnEnter         func(*World, *Room)
 	OnLeave         func(*World, *Room)
-	ProcessChan     chan func() bool
-	ProcessingChans []func() bool
+	RoutineChan     chan func() bool
+	RoutineChans    []func() bool
 }
 
 func NewRoom(w, h int) *Room {
 	r := &Room{
 		iso:         true,
-		ProcessChan: make(chan func() bool),
+		RoutineChan: make(chan func() bool),
 	}
 
 	r.Tiles = make([][]Tile, h)
@@ -55,22 +55,22 @@ func (r *Room) Activate() {
 }
 
 func (r *Room) Update(w *World) error {
-	// Process routines.
+	// Routine routines.
 	for done := false; !done; {
 		select {
-		case fnc := <-r.ProcessChan:
-			r.ProcessingChans = append(r.ProcessingChans, fnc)
+		case fnc := <-r.RoutineChan:
+			r.RoutineChans = append(r.RoutineChans, fnc)
 		default:
 			done = true
 		}
 	}
-	routines := r.ProcessingChans[:0]
-	for _, ch := range r.ProcessingChans {
+	routines := r.RoutineChans[:0]
+	for _, ch := range r.RoutineChans {
 		if !ch() {
 			routines = append(routines, ch)
 		}
 	}
-	r.ProcessingChans = routines
+	r.RoutineChans = routines
 
 	if r.colorTicker > 0 {
 		ratio := float64(r.colorTicker) / 60
@@ -105,7 +105,7 @@ func (r *Room) Update(w *World) error {
 		}
 	}
 
-	// Process small messages.
+	// Routine small messages.
 	messages := r.TileMessages[:0]
 	for _, m := range r.TileMessages {
 		if time.Since(m.start) < m.Duration {
@@ -119,7 +119,7 @@ func (r *Room) Update(w *World) error {
 		return nil
 	}
 
-	// Process actors.
+	// Routine actors.
 	for _, a := range r.Actors {
 		if cmd := a.Update(r); cmd != nil {
 			r.PendingCommands = append(r.PendingCommands,
@@ -322,7 +322,7 @@ func (r *Room) TileMessageR(m Message) chan bool {
 		done <- true
 		return true
 	}
-	r.ProcessChan <- fnc
+	r.RoutineChan <- fnc
 	return done
 }
 
@@ -333,7 +333,7 @@ func (r *Room) FuncR(fnc func()) chan bool {
 		done <- true
 		return true
 	}
-	r.ProcessChan <- f
+	r.RoutineChan <- f
 	return done
 }
 
@@ -369,6 +369,6 @@ func (r *Room) DropInR() chan bool {
 			return false
 		}
 	}
-	r.ProcessChan <- fnc
+	r.RoutineChan <- fnc
 	return done
 }
