@@ -14,6 +14,7 @@ type SpriteStack struct {
 	LayerDistance float64
 	Alpha         float32
 	Rotation      float64
+	YScale        float64
 	Highlight     bool
 	Shaded        bool
 }
@@ -22,6 +23,7 @@ func NewSpriteStack(sprite string) *SpriteStack {
 	ss := &SpriteStack{
 		LayerDistance: -1,
 		Alpha:         1.0,
+		YScale:        0.5,
 		//Shaded:        true,
 	}
 
@@ -39,7 +41,8 @@ func (ss *SpriteStack) IsoGeoM(geom ebiten.GeoM) ebiten.GeoM {
 	geom.Rotate(ss.Rotation)
 	geom.Translate(res.TileHalfWidth, res.TileHalfHeight)
 	geom.Rotate(math.Pi / 4)
-	geom.Scale(1, 0.5)
+	geom.Scale(1, ss.YScale)
+	geom.Translate(0, -res.TileHeight*ss.YScale)
 	return geom
 }
 
