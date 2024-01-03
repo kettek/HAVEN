@@ -67,6 +67,7 @@ func (p *Terminal) SpriteStack() *game.SpriteStack {
 func init() {
 	actors["terminal"] = func(x, y int) game.Actor {
 		ss := game.NewSpriteStack("terminal")
+		//ss.Shaded = true
 		ss.LayerDistance = -1
 		return &Terminal{
 			X:           x,

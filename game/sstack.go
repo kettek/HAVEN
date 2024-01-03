@@ -129,11 +129,11 @@ func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
 		if ss.Highlight {
 			op.ColorScale.ScaleWithColor(color.NRGBA{255, 255, 0, 255})
 		}
-		/*if ss.Shaded {
+		if ss.Shaded || settings.StackShading {
 			r := float64(i) / float64(len(ss.layers)-1)
 			c := uint8(200.0 + 55*r)
 			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
-		}*/
+		}
 		op.ColorScale.ScaleAlpha(ss.Alpha)
 
 		screen.DrawImage(ss.layers[i], op)
