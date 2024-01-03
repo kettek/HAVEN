@@ -13,9 +13,9 @@ type Room struct {
 	entities  string
 	entityMap map[string]string
 	metadata  map[string]interface{}
-	enter     func(r *game.Room)
-	leave     func(r *game.Room)
-	update    func(r *game.Room)
+	enter     func(w *game.World, r *game.Room)
+	leave     func(w *game.World, r *game.Room)
+	update    func(w *game.World, r *game.Room)
 }
 
 func (r *Room) ToGameRoom() *game.Room {

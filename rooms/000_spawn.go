@@ -46,11 +46,12 @@ func init() {
 			"T": "terminal",
 		},
 		metadata: make(map[string]interface{}),
-		enter: func(r *game.Room) {
+		enter: func(w *game.World, r *game.Room) {
+			fmt.Println("enter called")
 			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
 				return game.Message{Text: s, Duration: d, Color: c, Font: res.BigFont}
 			}
-			<-r.FuncR(func() {
+			<-w.FuncR(func() {
 				r.Color = color.NRGBA{0, 0, 0, 255}
 			})
 			delayTimeR(2 * time.Second)
@@ -61,27 +62,28 @@ func init() {
 				if i%2 == 0 {
 					u = "_"
 				}
-				<-r.MessageR(makeBigMsg(string(s[:i])+u, 200*time.Millisecond, clr))
+				<-w.MessageR(makeBigMsg(string(s[:i])+u, 200*time.Millisecond, clr))
 			}
-			<-r.MessageR(makeBigMsg(s, 1000*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg(".", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg(".", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
-			<-r.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
-			<-r.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
-			<-r.FuncR(func() {
+			<-w.MessageR(makeBigMsg(s, 1000*time.Millisecond, clr))
+			<-r.DropInR()
+			<-w.MessageR(makeBigMsg(".", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg(".", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
+			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
+			<-w.FuncR(func() {
 				r.SetColor(color.NRGBA{205, 205, 180, 255})
 			})
 		},
-		leave: func(r *game.Room) {
+		leave: func(w *game.World, r *game.Room) {
 			fmt.Println("left spawn")
 		},
-		update: func(r *game.Room) {
+		update: func(w *game.World, r *game.Room) {
 		},
 	}
 }
