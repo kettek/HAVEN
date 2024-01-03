@@ -42,7 +42,10 @@ func (ss *SpriteStack) IsoGeoM(geom ebiten.GeoM) ebiten.GeoM {
 	geom.Translate(res.TileHalfWidth, res.TileHalfHeight)
 	geom.Rotate(math.Pi / 4)
 	geom.Scale(1, ss.YScale)
-	geom.Translate(0, -res.TileHeight*ss.YScale)
+	// This is hacky,
+	if ss.YScale != 0.5 {
+		geom.Translate(0, -res.TileHalfHeight*ss.YScale)
+	}
 	return geom
 }
 
