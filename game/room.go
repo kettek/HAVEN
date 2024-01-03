@@ -166,19 +166,19 @@ func (r *Room) HandlePendingCommands() {
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil {
-					go r.TileMessageR(Message{Text: "something is there", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+					r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					continue
 				}
 				if tile := r.GetTile(c.X, c.Y); tile != nil {
 					if tile.SpriteStack == nil {
-						go r.TileMessageR(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					} else if !tile.BlocksMove {
 						cmd.Actor.SetPosition(c.X, c.Y)
 					} else {
-						go r.TileMessageR(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					}
 				} else {
-					go r.TileMessageR(Message{Text: "impossible", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+					r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 				}
 			}
 		case commands.Investigate:
@@ -188,14 +188,14 @@ func (r *Room) HandlePendingCommands() {
 				s = "see"
 			}
 			if actor := r.GetActor(c.X, c.Y); actor != nil {
-				go r.TileMessageR(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+				r.TileMessage(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 				continue
 			}
 			if tile := r.GetTile(c.X, c.Y); tile != nil && tile.Name != "" {
-				go r.TileMessageR(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+				r.TileMessage(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 				continue
 			}
-			go r.TileMessageR(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+			r.TileMessage(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 		default:
 			fmt.Println("handle", cmd.Actor, "wants to", cmd.Cmd)
 		}
@@ -321,7 +321,7 @@ func (r *Room) SetColor(c color.NRGBA) {
 	r.colorTicker = 60
 }
 
-func (r *Room) MessageR(m Message) bool {
+func (r *Room) MessageR(m Message) chan bool {
 	done := make(chan bool)
 	m.start = time.Now()
 	m.id = messageID
@@ -346,10 +346,21 @@ func (r *Room) MessageR(m Message) bool {
 		return false
 	}
 	r.ProcessChan <- fnc
-	return <-done
+	return done
 }
 
-func (r *Room) TileMessageR(m Message) bool {
+func (r *Room) TileMessage(m Message) {
+	m.start = time.Now()
+	if m.Color.A == 0 {
+		m.Color = color.NRGBA{0, 0, 0, 255}
+	}
+	if m.Font == nil {
+		m.Font = res.Font
+	}
+	r.TileMessages = append(r.TileMessages, m)
+}
+
+func (r *Room) TileMessageR(m Message) chan bool {
 	done := make(chan bool)
 	m.start = time.Now()
 	if m.Color.A == 0 {
@@ -364,5 +375,16 @@ func (r *Room) TileMessageR(m Message) bool {
 		return true
 	}
 	r.ProcessChan <- fnc
-	return <-done
+	return done
+}
+
+func (r *Room) FuncR(fnc func()) chan bool {
+	done := make(chan bool)
+	f := func() bool {
+		fnc()
+		done <- true
+		return true
+	}
+	r.ProcessChan <- f
+	return done
 }
