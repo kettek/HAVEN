@@ -14,6 +14,7 @@ type Player struct {
 	movingTicker     int
 	targetX, targetY int
 	spriteStack      *game.SpriteStack
+	onInteract       InteractFunc
 }
 
 func (p *Player) Command(cmd commands.Command) {
@@ -114,16 +115,28 @@ func (p *Player) SpriteStack() *game.SpriteStack {
 	return p.spriteStack
 }
 
+func (p *Player) Interact(w *game.World, r *game.Room, o game.Actor) commands.Command {
+	if p.onInteract != nil {
+		return p.onInteract(w, r, p, o)
+	}
+	return nil
+}
+
 func init() {
-	actors["player"] = func(x, y int) game.Actor {
+	actors["player"] = func(x, y int, ctor CreateFunc, interact InteractFunc) game.Actor {
 		ss := game.NewSpriteStack("player")
 		ss.Shaded = true
 		ss.YScale = 1
 		ss.LayerDistance = -1
-		return &Player{
+		p := &Player{
 			X:           x,
 			Y:           y,
 			spriteStack: ss,
+			onInteract:  interact,
 		}
+		if ctor != nil {
+			ctor(p)
+		}
+		return p
 	}
 }

@@ -14,6 +14,7 @@ type Actor interface {
 	Hovered() bool
 	Name() string
 	SpriteStack() *SpriteStack
+	Interact(w *World, r *Room, other Actor) commands.Command
 }
 
 type ActorCommand struct {

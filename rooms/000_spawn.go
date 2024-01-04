@@ -5,11 +5,14 @@ import (
 	"image/color"
 	"time"
 
+	"github.com/kettek/ebihack23/actors"
+	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/res"
 )
 
 func init() {
+	doorLocked := true
 	rooms["000_spawn"] = Room{
 		tiles: `// First line is ignored because lazy.
 		##D #
@@ -28,22 +31,63 @@ func init() {
 				Name:   "floor of haven",
 				Sprite: "haven-floor",
 			},
-			"D": {
-				Name:       "door to <unknown>",
-				Sprite:     "haven-door",
-				BlocksMove: true,
-			},
 		},
 		entities: `
-		   T 
+		  DT 
 		     
 		  @  
 		     
 		     
 		`,
-		entityMap: map[string]string{
-			"@": "player",
-			"T": "terminal",
+		entityMap: EntityDefs{
+			"@": {
+				Actor: "player",
+			},
+			"D": {
+				Actor: "interactable",
+				OnCreate: func(s game.Actor) {
+					d := s.(*actors.Interactable)
+					d.SetName("door to ![unknown]")
+					d.SpriteStack().SetSprite("haven-door")
+				},
+				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					fmt.Println("it be a door interacted with")
+					if doorLocked {
+						fmt.Println("it is locked")
+					}
+					return nil
+				},
+			},
+			"T": {
+				Actor: "interactable",
+				OnCreate: func(s game.Actor) {
+					s.(*actors.Interactable).SetName("terminal")
+				},
+				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					fmt.Println(other.Name(), "interacted with", s.Name())
+					// It would be kind of nice to have goroutine with "result <- w.Prompt(...)"
+					// I guess we can just do w.Prompt("...", func(result string) { ... })
+					prompts := []string{"Query Mainframe Status"}
+					if doorLocked {
+						prompts = append(prompts, "Unlock Safeguard")
+					} else {
+						prompts = append(prompts, "Lock Safeguard")
+					}
+					prompts = append(prompts, "Leave")
+					return commands.Prompt{
+						Items: prompts,
+						Handler: func(index int, result string) {
+							if index == 0 {
+								// Show some sort of dialog popup
+								fmt.Println("Show dialog")
+							} else if index == 1 {
+								doorLocked = !doorLocked
+							}
+						},
+					}
+					return nil
+				},
+			},
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
@@ -56,7 +100,7 @@ func init() {
 			})
 			delayTimeR(2 * time.Second)
 			clr := color.NRGBA{0, 255, 0, 255}
-			s := "/activate SHOU"
+			/*s := "/activate SHOU"
 			for i := range s {
 				u := ""
 				if i%2 == 0 {
@@ -75,10 +119,13 @@ func init() {
 			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
 			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
 			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
+			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))*/
 			<-w.FuncR(func() {
 				r.SetColor(color.NRGBA{205, 205, 180, 255})
 			})
+			go func() {
+				<-w.MessageR(makeBigMsg("<LMB> to investigate, <RMB> to act", 8000*time.Millisecond, clr))
+			}()
 		},
 		leave: func(w *game.World, r *game.Room) {
 			fmt.Println("left spawn")

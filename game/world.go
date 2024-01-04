@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"time"
 
@@ -49,7 +50,9 @@ done:
 
 	// Process room.
 	if w.Room != nil {
-		w.Room.Update(w)
+		for _, cmd := range w.Room.Update(w) {
+			fmt.Println("handle room command", cmd)
+		}
 	}
 }
 

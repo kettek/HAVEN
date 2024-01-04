@@ -54,7 +54,7 @@ func (r *Room) Activate() {
 	r.active = true
 }
 
-func (r *Room) Update(w *World) error {
+func (r *Room) Update(w *World) []commands.Command {
 	// Routine routines.
 	for done := false; !done; {
 		select {
@@ -119,7 +119,7 @@ func (r *Room) Update(w *World) error {
 		return nil
 	}
 
-	// Routine actors.
+	// Process actors.
 	for _, a := range r.Actors {
 		if cmd := a.Update(r); cmd != nil {
 			r.PendingCommands = append(r.PendingCommands,
@@ -134,12 +134,18 @@ func (r *Room) Update(w *World) error {
 		r.OnUpdate(w, r)
 	}
 
-	r.HandlePendingCommands()
+	var results []commands.Command
+	for _, cmd := range r.HandlePendingCommands(w) {
+		switch c := cmd.(type) {
+		default:
+			results = append(results, c)
+		}
+	}
 
-	return nil
+	return results
 }
 
-func (r *Room) HandlePendingCommands() {
+func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 	for _, cmd := range r.PendingCommands {
 		switch c := cmd.Cmd.(type) {
 		case commands.Move:
@@ -148,6 +154,10 @@ func (r *Room) HandlePendingCommands() {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil {
 					r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+					// FIXME: Interact needs to return stuff?
+					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
+						results = append(results, cmd)
+					}
 					continue
 				}
 				if tile := r.GetTile(c.X, c.Y); tile != nil {
@@ -182,6 +192,7 @@ func (r *Room) HandlePendingCommands() {
 		}
 	}
 	r.PendingCommands = nil
+	return
 }
 
 func (r *Room) ToIso() {
@@ -241,7 +252,6 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	lastX, lastY := -1, -1
 	for _, m := range r.TileMessages {
 		g, _ := r.GetTilePositionGeoM(m.X, m.Y)
-		fmt.Println(m.X, m.Y, m.Text)
 		if m.X == lastX && m.Y == lastY {
 			g.Translate(0, -4)
 		}

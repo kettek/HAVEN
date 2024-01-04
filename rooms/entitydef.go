@@ -1,6 +1,13 @@
 package rooms
 
+import (
+	"github.com/kettek/ebihack23/actors"
+)
+
 type EntityDef struct {
-	Name   string
-	Sprite string
+	Actor      string
+	OnCreate   actors.CreateFunc
+	OnInteract actors.InteractFunc
 }
+
+type EntityDefs map[string]EntityDef

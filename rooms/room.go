@@ -11,7 +11,7 @@ type Room struct {
 	tiles     string
 	tileDefs  TileDefs
 	entities  string
-	entityMap map[string]string
+	entityMap EntityDefs
 	metadata  map[string]interface{}
 	enter     func(w *game.World, r *game.Room)
 	leave     func(w *game.World, r *game.Room)
@@ -63,7 +63,7 @@ func (r *Room) ToGameRoom() *game.Room {
 			if !ok {
 				continue
 			}
-			actor := actors.New(entity, x, y)
+			actor := actors.New(entity.Actor, x, y, entity.OnCreate, entity.OnInteract)
 			if actor == nil {
 				continue
 			}

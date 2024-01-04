@@ -36,6 +36,14 @@ func NewSpriteStack(sprite string) *SpriteStack {
 	return ss
 }
 
+func (ss *SpriteStack) SetSprite(sprite string) {
+	layers, err := res.LoadSpriteStack(sprite)
+	if err != nil {
+		panic(err)
+	}
+	ss.layers = layers
+}
+
 func (ss *SpriteStack) IsoGeoM(geom ebiten.GeoM) ebiten.GeoM {
 	geom.Translate(-res.TileHalfWidth, -res.TileHalfHeight)
 	geom.Rotate(ss.Rotation)
