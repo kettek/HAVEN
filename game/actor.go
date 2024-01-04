@@ -9,7 +9,7 @@ type Actor interface {
 	Update(r *Room) (cmd commands.Command)
 	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
 	Position() (int, int)
-	SetPosition(x, y int)
+	Command(cmd commands.Command)
 	Hover(bool)
 	Hovered() bool
 	Name() string

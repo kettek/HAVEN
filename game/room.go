@@ -149,12 +149,12 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 	for _, cmd := range r.PendingCommands {
 		switch c := cmd.Cmd.(type) {
 		case commands.Move:
+			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
 			ax, ay := cmd.Actor.Position()
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil {
 					r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
-					// FIXME: Interact needs to return stuff?
 					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
 						results = append(results, cmd)
 					}
@@ -164,7 +164,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 					if tile.SpriteStack == nil {
 						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					} else if !tile.BlocksMove {
-						cmd.Actor.SetPosition(c.X, c.Y)
+						cmd.Actor.Command(c)
 					} else {
 						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
 					}
@@ -173,6 +173,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 				}
 			}
 		case commands.Investigate:
+			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
 			ax, ay := cmd.Actor.Position()
 			s := "feel"
 			if ax-c.X < -1 || ax-c.X > 1 || ay-c.Y < -1 || ay-c.Y > 1 {

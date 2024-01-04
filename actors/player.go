@@ -19,9 +19,39 @@ type Player struct {
 
 func (p *Player) Command(cmd commands.Command) {
 	switch cmd := cmd.(type) {
+	case commands.Face:
+		if cmd.X < p.X {
+			p.spriteStack.Rotation = math.Pi * 3 / 2
+		} else if cmd.X > p.X {
+			p.spriteStack.Rotation = math.Pi / 2
+		} else if cmd.Y < p.Y {
+			p.spriteStack.Rotation = 0
+		} else if cmd.Y > p.Y {
+			p.spriteStack.Rotation = math.Pi
+		}
 	case commands.Move:
+		if cmd.X < p.targetX {
+			p.spriteStack.Rotation = math.Pi * 3 / 2
+		} else if cmd.X > p.targetX {
+			p.spriteStack.Rotation = math.Pi / 2
+		} else if cmd.Y < p.targetY {
+			p.spriteStack.Rotation = 0
+		} else if cmd.Y > p.targetY {
+			p.spriteStack.Rotation = math.Pi
+		}
+		p.movingTicker = 10
 		p.targetX = cmd.X
 		p.targetY = cmd.Y
+	case commands.Investigate:
+		if cmd.X < p.targetX {
+			p.spriteStack.Rotation = math.Pi * 3 / 2
+		} else if cmd.X > p.targetX {
+			p.spriteStack.Rotation = math.Pi / 2
+		} else if cmd.Y < p.targetY {
+			p.spriteStack.Rotation = 0
+		} else if cmd.Y > p.targetY {
+			p.spriteStack.Rotation = math.Pi
+		}
 	}
 }
 
@@ -47,17 +77,6 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 		y = 1
 	}
 	if x != 0 || y != 0 {
-		// For now, because I'm lazy, face the direction we're acting towards.
-		// FIXME: Move this elsewhere!
-		if x < 0 {
-			p.spriteStack.Rotation = math.Pi * 3 / 2
-		} else if x > 0 {
-			p.spriteStack.Rotation = math.Pi / 2
-		} else if y < 0 {
-			p.spriteStack.Rotation = 0
-		} else if y > 0 {
-			p.spriteStack.Rotation = math.Pi
-		}
 		if ebiten.IsKeyPressed(ebiten.KeyShift) {
 			return commands.Investigate{X: p.X + x, Y: p.Y + y}
 		} else {
@@ -87,12 +106,6 @@ func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 
 func (p *Player) Position() (int, int) {
 	return p.X, p.Y
-}
-
-func (p *Player) SetPosition(x, y int) {
-	p.movingTicker = 10
-	p.targetX = x
-	p.targetY = y
 }
 
 func (p *Player) Hover(h bool) {

@@ -39,13 +39,6 @@ func (p *Interactable) Position() (int, int) {
 	return p.X, p.Y
 }
 
-func (p *Interactable) SetPosition(x, y int) {
-	p.X = x
-	p.Y = y
-	p.targetX = x
-	p.targetY = y
-}
-
 func (p *Interactable) Hover(h bool) {
 	if h {
 		p.spriteStack.Highlight = true
