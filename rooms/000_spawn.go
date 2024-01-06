@@ -63,8 +63,11 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					s.(*actors.Interactable).SetName("terminal")
+					s.SpriteStack().SetSprite("terminal-off")
+					s.SetTag("terminal")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					r.GetActorByTag("terminal").SpriteStack().SetSprite("terminal")
 					prompts := []string{"Query Mainframe", "Manage Safeguard", "Leave"}
 					//res.PlaySound("button")
 					poweron := res.PlaySound("poweron")
@@ -114,6 +117,7 @@ func init() {
 							poweron.Next = poweroff // Set poweron's next to poweroff just in case the player exits the menu quickly.
 							powered.Looping = false
 							powered.Pause()
+							r.GetActorByTag("terminal").SpriteStack().SetSprite("terminal-off")
 							return true
 						},
 					}
