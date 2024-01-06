@@ -81,7 +81,6 @@ func (w *World) Draw(screen *ebiten.Image) {
 	res.Text.Utils().StoreState()
 	if len(w.Messages) > 0 {
 		m := w.Messages[0]
-		//text.Draw(screen, m.Text, m.Font, 16, 32, m.Color)
 		res.Text.SetColor(m.Color)
 		res.Text.Draw(screen, m.Text, 16, 32)
 	}
@@ -90,7 +89,8 @@ func (w *World) Draw(screen *ebiten.Image) {
 	if len(w.Prompts) != 0 {
 		geom := ebiten.GeoM{}
 		prompt := w.Prompts[len(w.Prompts)-1]
-		geom.Translate(float64(screen.Bounds().Dx())-float64(prompt.image.Bounds().Dx())-16, float64(screen.Bounds().Dy())/2-float64(prompt.image.Bounds().Dy()/2))
+		//geom.Translate(float64(screen.Bounds().Dx())-float64(prompt.image.Bounds().Dx())-16, float64(screen.Bounds().Dy())/2-float64(prompt.image.Bounds().Dy()/2))
+		geom.Translate(float64(screen.Bounds().Dx()/2-prompt.image.Bounds().Dx()/2), float64(screen.Bounds().Dy()/2-prompt.image.Bounds().Dy()/2))
 		prompt.Draw(screen, geom)
 	}
 }
@@ -114,8 +114,7 @@ func (w *World) EnterRoom(room *Room) {
 }
 
 func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool) {
-	ww, wh := ebiten.WindowSize()
-	w.Prompts = append(w.Prompts, NewPrompt(ww/3, wh/2, items, msg, func(i int, s string) bool {
+	w.Prompts = append(w.Prompts, NewPrompt(320, 200, items, msg, func(i int, s string) bool {
 		done := false
 		if i == -1 {
 			done = true
