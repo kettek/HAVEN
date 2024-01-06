@@ -123,6 +123,13 @@ func (p *Player) Name() string {
 	return "player"
 }
 
+func (p *Player) SetTag(s string) {
+}
+
+func (p *Player) Tag() string {
+	return "player"
+}
+
 func (p *Player) SpriteStack() *game.SpriteStack {
 	return p.spriteStack
 }

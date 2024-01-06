@@ -409,3 +409,12 @@ func (r *Room) DropInR() chan bool {
 	r.RoutineChan <- fnc
 	return done
 }
+
+func (r *Room) GetActorByTag(tag string) Actor {
+	for _, a := range r.Actors {
+		if a.Tag() == tag {
+			return a
+		}
+	}
+	return nil
+}

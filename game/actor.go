@@ -14,6 +14,8 @@ type Actor interface {
 	Input(in inputs.Input)
 	Hover(bool)
 	Hovered() bool
+	SetTag(string)
+	Tag() string
 	Name() string
 	SpriteStack() *SpriteStack
 	Interact(w *World, r *Room, other Actor) commands.Command

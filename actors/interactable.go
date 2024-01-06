@@ -10,6 +10,7 @@ import (
 type Interactable struct {
 	X, Y               int
 	name               string
+	tag                string
 	moving             bool
 	targetX, targetY   int
 	pendingX, pendingY float64
@@ -61,6 +62,14 @@ func (p *Interactable) SetName(s string) {
 
 func (p *Interactable) Name() string {
 	return p.name
+}
+
+func (p *Interactable) SetTag(s string) {
+	p.tag = s
+}
+
+func (p *Interactable) Tag() string {
+	return p.tag
 }
 
 func (p *Interactable) SpriteStack() *game.SpriteStack {

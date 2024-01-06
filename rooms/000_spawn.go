@@ -49,6 +49,7 @@ func init() {
 					d := s.(*actors.Interactable)
 					d.SetName("door to ![unknown]")
 					d.SpriteStack().SetSprite("haven-door")
+					d.SetTag("door")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					fmt.Println("it be a door interacted with")
@@ -83,10 +84,12 @@ func init() {
 								w.AddPrompt([]string{"Lock", "Unlock", "Return"}, status, func(index int, result string) bool {
 									if index == 0 {
 										doorLocked = true
+										r.GetActorByTag("door").SpriteStack().SetSprite("haven-door")
 										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: locked"
 										return false
 									} else if index == 1 {
 										doorLocked = false
+										r.GetActorByTag("door").SpriteStack().SetSprite("haven-door-unlocked")
 										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: unlocked"
 										return false
 									}
