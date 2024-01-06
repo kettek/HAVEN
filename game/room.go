@@ -177,6 +177,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 						cmd.Actor.Command(c)
 					} else {
 						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+						res.PlaySound("bump")
 					}
 				} else {
 					r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})

@@ -7,6 +7,7 @@ import (
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/inputs"
+	"github.com/kettek/ebihack23/res"
 )
 
 type Player struct {
@@ -31,6 +32,7 @@ func (p *Player) Command(cmd commands.Command) {
 			p.spriteStack.Rotation = math.Pi
 		}
 	case commands.Move:
+		res.PlaySound("step")
 		if cmd.X < p.targetX {
 			p.spriteStack.Rotation = math.Pi * 3 / 2
 		} else if cmd.X > p.targetX {

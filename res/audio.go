@@ -2,7 +2,6 @@ package res
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 
@@ -39,7 +38,6 @@ func init() {
 		panic(err)
 	}
 	for _, f := range files {
-		fmt.Println("hmm", f.Name())
 		if f.IsDir() {
 			continue
 		}
