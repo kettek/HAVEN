@@ -4,6 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
+	"github.com/kettek/ebihack23/inputs"
 )
 
 type Interactable struct {
@@ -27,6 +28,9 @@ func (p *Interactable) Command(cmd commands.Command) {
 func (p *Interactable) Update(room *game.Room) (cmd commands.Command) {
 	// If active, check for... something.
 	return nil
+}
+
+func (p *Interactable) Input(in inputs.Input) {
 }
 
 func (p *Interactable) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {

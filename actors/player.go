@@ -4,9 +4,9 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
+	"github.com/kettek/ebihack23/inputs"
 )
 
 type Player struct {
@@ -15,6 +15,7 @@ type Player struct {
 	targetX, targetY int
 	spriteStack      *game.SpriteStack
 	onInteract       InteractFunc
+	pendingCommand   commands.Command
 }
 
 func (p *Player) Command(cmd commands.Command) {
@@ -65,25 +66,23 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 		return nil
 	}
 
-	// FIXME: This isn't supposed to be here.
-	var x, y int
-	if inpututil.IsKeyJustReleased(ebiten.KeyLeft) {
-		x = -1
-	} else if inpututil.IsKeyJustReleased(ebiten.KeyRight) {
-		x = 1
-	} else if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
-		y = -1
-	} else if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
-		y = 1
+	if p.pendingCommand != nil {
+		cmd = p.pendingCommand
+		p.pendingCommand = nil
 	}
-	if x != 0 || y != 0 {
-		if ebiten.IsKeyPressed(ebiten.KeyShift) {
-			return commands.Investigate{X: p.X + x, Y: p.Y + y}
+
+	return cmd
+}
+
+func (p *Player) Input(in inputs.Input) {
+	switch in := in.(type) {
+	case inputs.Direction:
+		if in.Mod {
+			p.pendingCommand = commands.Investigate{X: p.X + in.X, Y: p.Y + in.Y}
 		} else {
-			return commands.Move{X: p.X + x, Y: p.Y + y}
+			p.pendingCommand = commands.Move{X: p.X + in.X, Y: p.Y + in.Y}
 		}
 	}
-	return nil
 }
 
 func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {

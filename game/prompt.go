@@ -5,8 +5,8 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/res"
 	"github.com/tinne26/etxt"
 )
@@ -77,23 +77,26 @@ func (p *Prompt) Refresh() {
 }
 
 func (p *Prompt) Update() {
-	// It'd be nicer to handle this indirectly, but whatever.
-	if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
-		p.Selected--
-	}
-	if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
-		p.Selected++
-	}
-	if p.Selected < 0 {
-		p.Selected = 0
-	}
-	if p.Selected >= len(p.Items) {
-		p.Selected = len(p.Items) - 1
-	}
-	if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
+}
+
+func (p *Prompt) Input(in inputs.Input) {
+	switch in := in.(type) {
+	case inputs.Direction:
+		if in.Y < 0 {
+			p.Selected--
+		}
+		if in.Y > 0 {
+			p.Selected++
+		}
+		if p.Selected < 0 {
+			p.Selected = 0
+		}
+		if p.Selected >= len(p.Items) {
+			p.Selected = len(p.Items) - 1
+		}
+	case inputs.Confirm:
 		p.cb(p.Selected, p.Items[p.Selected])
-	}
-	if inpututil.IsKeyJustReleased(ebiten.KeyEscape) {
+	case inputs.Cancel:
 		p.cb(-1, "")
 	}
 	p.Refresh()

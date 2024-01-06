@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/commands"
+	"github.com/kettek/ebihack23/inputs"
 )
 
 type Actor interface {
@@ -10,6 +11,7 @@ type Actor interface {
 	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
 	Position() (int, int)
 	Command(cmd commands.Command)
+	Input(in inputs.Input)
 	Hover(bool)
 	Hovered() bool
 	Name() string

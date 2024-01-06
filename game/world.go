@@ -7,10 +7,12 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/commands"
+	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/res"
 )
 
 type World struct {
+	PlayerActor  Actor
 	Rooms        []*Room
 	Room         *Room
 	Camera       *Camera
@@ -63,6 +65,14 @@ done:
 				fmt.Println("unhandled room->world command", cmd)
 			}
 		}
+	}
+}
+
+func (w *World) Input(in inputs.Input) {
+	if len(w.Prompts) > 0 {
+		w.Prompts[len(w.Prompts)-1].Input(in)
+	} else {
+		w.Room.Input(w, in)
 	}
 }
 

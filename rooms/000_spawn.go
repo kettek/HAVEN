@@ -102,6 +102,13 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
+			// Get our player.
+			for _, a := range r.Actors {
+				if a.Name() == "player" {
+					w.PlayerActor = a
+					break
+				}
+			}
 			fmt.Println("enter called")
 			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
 				return game.Message{Text: s, Duration: d, Color: c, Font: &res.BigFont}

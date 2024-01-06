@@ -7,6 +7,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/commands"
+	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/res"
 	"github.com/tinne26/etxt"
 )
@@ -143,6 +144,12 @@ func (r *Room) Update(w *World) []commands.Command {
 	}
 
 	return results
+}
+
+func (r *Room) Input(w *World, in inputs.Input) {
+	if w.PlayerActor != nil {
+		w.PlayerActor.Input(in)
+	}
 }
 
 func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {

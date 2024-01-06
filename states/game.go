@@ -6,6 +6,7 @@ import (
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
+	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/rooms"
 	"github.com/kettek/ebihack23/settings"
 )
@@ -33,6 +34,33 @@ func (g *Game) Room() *game.Room {
 }
 
 func (g *Game) Update() error {
+	// Get inputs.
+	if inpututil.IsKeyJustReleased(ebiten.KeyEscape) {
+		g.world.Input(inputs.Cancel{})
+	}
+	if inpututil.IsKeyJustReleased(ebiten.KeyEnter) || inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+		g.world.Input(inputs.Confirm{})
+	}
+	{
+		var x int
+		var y int
+		if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
+			y--
+		}
+		if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
+			y++
+		}
+		if inpututil.IsKeyJustReleased(ebiten.KeyLeft) {
+			x--
+		}
+		if inpututil.IsKeyJustReleased(ebiten.KeyRight) {
+			x++
+		}
+		if x != 0 || y != 0 {
+			g.world.Input(inputs.Direction{X: x, Y: y, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
+		}
+	}
+
 	g.world.Update()
 
 	if g.Room() == nil {
