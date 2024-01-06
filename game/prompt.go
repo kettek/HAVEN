@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -36,7 +37,7 @@ func (p *Prompt) Refresh() {
 
 	pt := p.image.Bounds().Size()
 
-	vector.StrokeRect(p.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 245, 220, 200}, true)
+	vector.StrokeRect(p.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 245, 220, 255}, true)
 
 	x := 4
 	y := 0
@@ -45,8 +46,13 @@ func (p *Prompt) Refresh() {
 	res.Text.SetSize(12)
 	res.Text.SetFont(res.SmallFont)
 
-	msg := p.Message + "\n"
-	res.Text.SetColor(color.NRGBA{245, 245, 220, 200})
+	msg := fmt.Sprintf("ebiOS %s\n", res.EbiOS)
+	res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
+	res.Text.DrawWithWrap(p.image, msg, x, y, pt.X-8)
+	y += res.Text.MeasureWithWrap(msg, pt.X-8).IntHeight()
+
+	msg = p.Message + "\n"
+	res.Text.SetColor(color.NRGBA{255, 255, 255, 200})
 	res.Text.DrawWithWrap(p.image, msg, x, y, pt.X-8)
 	y += res.Text.MeasureWithWrap(msg, pt.X-8).IntHeight()
 
