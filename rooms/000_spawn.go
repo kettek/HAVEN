@@ -66,6 +66,14 @@ func init() {
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					prompts := []string{"Query Mainframe", "Manage Safeguard", "Leave"}
+					//res.PlaySound("button")
+					poweron := res.PlaySound("poweron")
+					powered := res.GetSound("powered")
+					poweroff := res.GetSound("poweroff")
+					poweron.Next = powered
+
+					powered.Looping = true
+					powered.Next = poweroff
 					return commands.Prompt{
 						Items: prompts,
 						Handler: func(index int, result string) bool {
@@ -103,6 +111,9 @@ func init() {
 								})
 								return false
 							}
+							poweron.Next = poweroff // Set poweron's next to poweroff just in case the player exits the menu quickly.
+							powered.Looping = false
+							powered.Pause()
 							return true
 						},
 					}
