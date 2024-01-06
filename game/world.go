@@ -72,7 +72,9 @@ func (w *World) Input(in inputs.Input) {
 	if len(w.Prompts) > 0 {
 		w.Prompts[len(w.Prompts)-1].Input(in)
 	} else {
-		w.Room.Input(w, in)
+		if !w.Room.Input(w, in) {
+			// TODO: Send to camera?
+		}
 	}
 }
 

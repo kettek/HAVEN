@@ -74,7 +74,7 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 	return cmd
 }
 
-func (p *Player) Input(in inputs.Input) {
+func (p *Player) Input(in inputs.Input) bool {
 	switch in := in.(type) {
 	case inputs.Direction:
 		if in.Mod {
@@ -82,7 +82,9 @@ func (p *Player) Input(in inputs.Input) {
 		} else {
 			p.pendingCommand = commands.Move{X: p.X + in.X, Y: p.Y + in.Y}
 		}
+		return true
 	}
+	return false
 }
 
 func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {

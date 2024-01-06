@@ -146,10 +146,13 @@ func (r *Room) Update(w *World) []commands.Command {
 	return results
 }
 
-func (r *Room) Input(w *World, in inputs.Input) {
+func (r *Room) Input(w *World, in inputs.Input) bool {
 	if w.PlayerActor != nil {
-		w.PlayerActor.Input(in)
+		if w.PlayerActor.Input(in) {
+			return true
+		}
 	}
+	return false
 }
 
 func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {

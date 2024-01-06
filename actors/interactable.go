@@ -31,7 +31,8 @@ func (p *Interactable) Update(room *game.Room) (cmd commands.Command) {
 	return nil
 }
 
-func (p *Interactable) Input(in inputs.Input) {
+func (p *Interactable) Input(in inputs.Input) bool {
+	return false
 }
 
 func (p *Interactable) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
