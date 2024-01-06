@@ -83,11 +83,17 @@ func init() {
 								}
 								w.AddPrompt([]string{"Lock", "Unlock", "Return"}, status, func(index int, result string) bool {
 									if index == 0 {
+										if !doorLocked {
+											res.PlaySound("lock")
+										}
 										doorLocked = true
 										r.GetActorByTag("door").SpriteStack().SetSprite("haven-door")
 										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: locked"
 										return false
 									} else if index == 1 {
+										if doorLocked {
+											res.PlaySound("unlock")
+										}
 										doorLocked = false
 										r.GetActorByTag("door").SpriteStack().SetSprite("haven-door-unlocked")
 										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: unlocked"
