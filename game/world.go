@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/res"
 )
 
@@ -16,6 +17,7 @@ type World struct {
 	RoutineChan  chan func() bool
 	RoutineChans []func() bool
 	Messages     []Message
+	Prompts      []*Prompt
 }
 
 func NewWorld() *World {
@@ -44,13 +46,22 @@ done:
 	}
 	w.RoutineChans = routines
 
+	if len(w.Prompts) != 0 {
+		w.Prompts[len(w.Prompts)-1].Update()
+	}
+
 	// Process camera.
 	w.Camera.Update()
 
 	// Process room.
 	if w.Room != nil {
 		for _, cmd := range w.Room.Update(w) {
-			fmt.Println("handle room command", cmd)
+			switch cmd := cmd.(type) {
+			case commands.Prompt:
+				w.AddPrompt(cmd.Items, "", cmd.Handler)
+			default:
+				fmt.Println("unhandled room->world command", cmd)
+			}
 		}
 	}
 }
@@ -75,6 +86,13 @@ func (w *World) Draw(screen *ebiten.Image) {
 		res.Text.Draw(screen, m.Text, 16, 32)
 	}
 	res.Text.Utils().RestoreState()
+
+	if len(w.Prompts) != 0 {
+		geom := ebiten.GeoM{}
+		prompt := w.Prompts[len(w.Prompts)-1]
+		geom.Translate(float64(screen.Bounds().Dx())-float64(prompt.image.Bounds().Dx())-16, float64(screen.Bounds().Dy())/2-float64(prompt.image.Bounds().Dy()/2))
+		prompt.Draw(screen, geom)
+	}
 }
 
 func (w *World) EnterRoom(room *Room) {
@@ -93,6 +111,22 @@ func (w *World) EnterRoom(room *Room) {
 			w.Room.Activate()
 		})
 	}()
+}
+
+func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool) {
+	ww, wh := ebiten.WindowSize()
+	w.Prompts = append(w.Prompts, NewPrompt(ww/3, wh/2, items, msg, func(i int, s string) bool {
+		done := false
+		if i == -1 {
+			done = true
+		} else {
+			done = cb(i, s)
+		}
+		if done {
+			w.Prompts = w.Prompts[:len(w.Prompts)-1]
+		}
+		return done
+	}))
 }
 
 func (w *World) MessageR(msg Message) chan bool {

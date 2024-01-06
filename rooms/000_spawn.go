@@ -64,28 +64,39 @@ func init() {
 					s.(*actors.Interactable).SetName("terminal")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
-					fmt.Println(other.Name(), "interacted with", s.Name())
-					// It would be kind of nice to have goroutine with "result <- w.Prompt(...)"
-					// I guess we can just do w.Prompt("...", func(result string) { ... })
-					prompts := []string{"Query Mainframe Status"}
-					if doorLocked {
-						prompts = append(prompts, "Unlock Safeguard")
-					} else {
-						prompts = append(prompts, "Lock Safeguard")
-					}
-					prompts = append(prompts, "Leave")
+					prompts := []string{"Query Mainframe", "Manage Safeguard", "Leave"}
 					return commands.Prompt{
 						Items: prompts,
-						Handler: func(index int, result string) {
+						Handler: func(index int, result string) bool {
 							if index == 0 {
-								// Show some sort of dialog popup
-								fmt.Println("Show dialog")
+								w.AddPrompt([]string{"Return"}, "Mainframe status... corrupted.\nSolution: purge system", func(index int, result string) bool {
+									return true
+								})
+								return false
 							} else if index == 1 {
-								doorLocked = !doorLocked
+								status := "Safeguard: "
+								if doorLocked {
+									status += "locked"
+								} else {
+									status += "unlocked"
+								}
+								w.AddPrompt([]string{"Lock", "Unlock", "Return"}, status, func(index int, result string) bool {
+									if index == 0 {
+										doorLocked = true
+										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: locked"
+										return false
+									} else if index == 1 {
+										doorLocked = false
+										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: unlocked"
+										return false
+									}
+									return true
+								})
+								return false
 							}
+							return true
 						},
 					}
-					return nil
 				},
 			},
 		},
