@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"time"
 
-	"golang.org/x/image/font/sfnt"
+	"github.com/kettek/ebihack23/res"
 )
 
 type Message struct {
@@ -13,7 +13,7 @@ type Message struct {
 	Color    color.NRGBA
 	X        int
 	Y        int
-	Font     *sfnt.Font
+	Font     *res.Font
 	start    time.Time
 	id       int
 }

@@ -104,7 +104,7 @@ func init() {
 		enter: func(w *game.World, r *game.Room) {
 			fmt.Println("enter called")
 			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
-				return game.Message{Text: s, Duration: d, Color: c, Font: res.BigFont}
+				return game.Message{Text: s, Duration: d, Color: c, Font: &res.BigFont}
 			}
 			<-w.FuncR(func() {
 				r.Color = color.NRGBA{0, 0, 0, 255}

@@ -40,11 +40,11 @@ func (p *Prompt) Refresh() {
 	vector.StrokeRect(p.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 245, 220, 255}, true)
 
 	x := 4
-	y := 0
+	y := 2
 	res.Text.Utils().StoreState()
 	res.Text.SetAlign(etxt.Left | etxt.Top)
-	res.Text.SetSize(12)
-	res.Text.SetFont(res.SmallFont)
+	res.Text.SetSize(float64(res.DefFont.Size))
+	res.Text.SetFont(res.DefFont.Font)
 
 	msg := fmt.Sprintf("ebiOS %s\n", res.EbiOS)
 	res.Text.SetColor(color.NRGBA{219, 86, 32, 200})

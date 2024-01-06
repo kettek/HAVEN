@@ -137,7 +137,7 @@ func (w *World) MessageR(msg Message) chan bool {
 		msg.Color = color.NRGBA{0, 0, 0, 255}
 	}
 	if msg.Font == nil {
-		msg.Font = res.Font
+		msg.Font = &res.DefFont
 	}
 	messageID++
 

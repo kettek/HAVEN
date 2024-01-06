@@ -154,7 +154,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil {
-					r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+					r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
 						results = append(results, cmd)
 					}
@@ -162,14 +162,14 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 				}
 				if tile := r.GetTile(c.X, c.Y); tile != nil {
 					if tile.SpriteStack == nil {
-						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 					} else if !tile.BlocksMove {
 						cmd.Actor.Command(c)
 					} else {
-						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 					}
 				} else {
-					r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+					r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 				}
 			}
 		case commands.Investigate:
@@ -180,14 +180,14 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 				s = "see"
 			}
 			if actor := r.GetActor(c.X, c.Y); actor != nil {
-				r.TileMessage(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+				r.TileMessage(Message{Text: fmt.Sprintf("i %s thing <%s>", s, actor.Name()), Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 				continue
 			}
 			if tile := r.GetTile(c.X, c.Y); tile != nil && tile.Name != "" {
-				r.TileMessage(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+				r.TileMessage(Message{Text: fmt.Sprintf("i %s <%s>", s, tile.Name), Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 				continue
 			}
-			r.TileMessage(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second, Font: res.SmallFont, X: ax, Y: ay})
+			r.TileMessage(Message{Text: fmt.Sprintf("i %s nil", s), Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 		default:
 			fmt.Println("handle", cmd.Actor, "wants to", cmd.Cmd)
 		}
@@ -263,8 +263,8 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		g.Concat(geom)
 		gx := g.Element(0, 2)
 		gy := g.Element(1, 2) - res.TileHeight*2 // Offset so the text doesn't appear right over the target
-		res.Text.SetSize(12)
-		res.Text.SetFont(m.Font)
+		res.Text.SetSize(float64(m.Font.Size))
+		res.Text.SetFont(m.Font.Font)
 		res.Text.SetColor(m.Color)
 		res.Text.Draw(screen, m.Text, int(gx), int(gy))
 	}
@@ -321,7 +321,7 @@ func (r *Room) TileMessage(m Message) {
 		m.Color = color.NRGBA{255, 255, 255, 255}
 	}
 	if m.Font == nil {
-		m.Font = res.Font
+		m.Font = &res.DefFont
 	}
 	r.TileMessages = append(r.TileMessages, m)
 }
@@ -333,7 +333,7 @@ func (r *Room) TileMessageR(m Message) chan bool {
 		m.Color = color.NRGBA{0, 0, 0, 255}
 	}
 	if m.Font == nil {
-		m.Font = res.Font
+		m.Font = &res.DefFont
 	}
 	fnc := func() bool {
 		r.TileMessages = append(r.TileMessages, m)
