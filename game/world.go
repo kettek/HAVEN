@@ -130,6 +130,7 @@ func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool)
 		done := false
 		if i == -1 {
 			done = true
+			cb(i, s)
 		} else {
 			done = cb(i, s)
 		}
