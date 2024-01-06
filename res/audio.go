@@ -11,23 +11,80 @@ import (
 
 var audioContext *audio.Context
 
+type SoundPlayer struct {
+	*audio.Player
+	Looping bool
+	Next    *SoundPlayer
+}
+
 type SoundEffect struct {
 	bytes []byte
 }
 
-func (s SoundEffect) Play() *audio.Player {
+func (s SoundEffect) Play() *SoundPlayer {
 	p := audioContext.NewPlayerFromBytes(s.bytes)
 	p.Play()
-	return p
+	sp := &SoundPlayer{
+		Player:  p,
+		Looping: false,
+	}
+	PlayingSounds = append(PlayingSounds, sp)
+	return sp
+}
+
+func (s SoundEffect) PlayLooped() *SoundPlayer {
+	sp := s.Play()
+	sp.Looping = true
+	return sp
 }
 
 var Sounds = map[string]SoundEffect{}
+var PlayingSounds []*SoundPlayer
 
-func PlaySound(name string) *audio.Player {
+func GetSound(name string) *SoundPlayer {
+	if _, ok := Sounds[name]; !ok {
+		panic("sound not found")
+	}
+	p := audioContext.NewPlayerFromBytes(Sounds[name].bytes)
+	sp := &SoundPlayer{
+		Player:  p,
+		Looping: false,
+	}
+	return sp
+}
+
+func PlaySound(name string) *SoundPlayer {
 	if _, ok := Sounds[name]; !ok {
 		panic("sound not found")
 	}
 	return Sounds[name].Play()
+}
+
+func PlayLoopedSound(name string) *SoundPlayer {
+	if _, ok := Sounds[name]; !ok {
+		panic("sound not found")
+	}
+	return Sounds[name].PlayLooped()
+}
+
+func UpdateSounds() {
+	sounds := PlayingSounds[:0]
+	for _, s := range PlayingSounds {
+		if s.IsPlaying() {
+			sounds = append(sounds, s)
+			continue
+		} else {
+			if s.Looping {
+				s.SetPosition(0)
+				s.Play()
+				sounds = append(sounds, s)
+			} else if s.Next != nil {
+				s.Next.Play()
+				sounds = append(sounds, s.Next)
+			}
+		}
+	}
+	PlayingSounds = sounds
 }
 
 func init() {

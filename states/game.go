@@ -7,6 +7,7 @@ import (
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/inputs"
+	"github.com/kettek/ebihack23/res"
 	"github.com/kettek/ebihack23/rooms"
 	"github.com/kettek/ebihack23/settings"
 )
@@ -34,6 +35,7 @@ func (g *Game) Room() *game.Room {
 }
 
 func (g *Game) Update() error {
+	res.UpdateSounds()
 	// Get inputs.
 	if inpututil.IsKeyJustReleased(ebiten.KeyEscape) {
 		g.world.Input(inputs.Cancel{})
