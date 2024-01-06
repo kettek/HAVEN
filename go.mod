@@ -8,6 +8,7 @@ require (
 	github.com/jezek/xgb v1.1.0 // indirect
 	github.com/kettek/gobl v0.1.1-0.20221216032959-8e9d1fcdf8ee // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
+	github.com/tinne26/etxt v0.0.9-alpha.6.0.20231222075849-994f1af41032 // indirect
 	golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63 // indirect
 	golang.org/x/image v0.12.0 // indirect
 	golang.org/x/mobile v0.0.0-20230922142353-e2f452493d57 // indirect

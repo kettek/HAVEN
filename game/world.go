@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/kettek/ebihack23/res"
 )
 
@@ -68,10 +67,14 @@ func (w *World) Draw(screen *ebiten.Image) {
 		w.Room.Draw(screen, geom)
 	}
 
+	res.Text.Utils().StoreState()
 	if len(w.Messages) > 0 {
 		m := w.Messages[0]
-		text.Draw(screen, m.Text, m.Font, 16, 32, m.Color)
+		//text.Draw(screen, m.Text, m.Font, 16, 32, m.Color)
+		res.Text.SetColor(m.Color)
+		res.Text.Draw(screen, m.Text, 16, 32)
 	}
+	res.Text.Utils().RestoreState()
 }
 
 func (w *World) EnterRoom(room *Room) {

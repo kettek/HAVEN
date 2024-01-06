@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/res"
+	"github.com/tinne26/etxt"
 )
 
 type Room struct {
@@ -251,6 +251,8 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	}
 
 	lastX, lastY := -1, -1
+	res.Text.Utils().StoreState()
+	res.Text.SetAlign(etxt.Center)
 	for _, m := range r.TileMessages {
 		g, _ := r.GetTilePositionGeoM(m.X, m.Y)
 		if m.X == lastX && m.Y == lastY {
@@ -260,9 +262,13 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		lastY = m.Y
 		g.Concat(geom)
 		gx := g.Element(0, 2)
-		gy := g.Element(1, 2)
-		text.Draw(screen, m.Text, m.Font, int(gx), int(gy), m.Color)
+		gy := g.Element(1, 2) - res.TileHeight*2 // Offset so the text doesn't appear right over the target
+		res.Text.SetSize(12)
+		res.Text.SetFont(m.Font)
+		res.Text.SetColor(m.Color)
+		res.Text.Draw(screen, m.Text, int(gx), int(gy))
 	}
+	res.Text.Utils().RestoreState()
 }
 
 func (r *Room) Size() (int, int) {
