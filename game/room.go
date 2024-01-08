@@ -137,7 +137,7 @@ func (r *Room) Update(w *World) []commands.Command {
 		sort.Slice(r.Actors, func(i, j int) bool {
 			x1, y1, z1 := r.Actors[i].Position()
 			x2, y2, z2 := r.Actors[j].Position()
-			return z1 < z2 || (z1 == z2 && x1-x2 > y1-y2)
+			return z1 < z2 || (z1 == z2 && x2-x1 > y1-y2)
 		})
 	}
 
