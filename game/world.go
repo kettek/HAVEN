@@ -168,7 +168,7 @@ func (w *World) EnterRoom(room *Room) {
 			w.LastRoom = w.Room
 			w.Room = room
 			if w.LastRoom != nil {
-				w.Room.drawMode = w.LastRoom.drawMode
+				w.Room.DrawMode = w.LastRoom.DrawMode
 			}
 			w.colorTicker = 0
 			if w.PlayerActor != nil {

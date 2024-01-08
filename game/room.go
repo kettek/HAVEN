@@ -23,7 +23,7 @@ type Room struct {
 	iso             bool
 	transition      int
 	active          bool
-	drawMode        DrawMode
+	DrawMode        DrawMode
 	OnUpdate        func(*World, *Room)
 	OnEnter         func(*World, *Room)
 	OnLeave         func(*World, *Room)
@@ -86,17 +86,17 @@ func (r *Room) Update(w *World) []commands.Command {
 		}
 	}
 
-	if r.drawMode == DrawModeFlatToIso {
+	if r.DrawMode == DrawModeFlatToIso {
 		if r.transition > 0 {
 			r.transition--
 		} else {
-			r.drawMode = DrawModeIso
+			r.DrawMode = DrawModeIso
 		}
-	} else if r.drawMode == DrawModeIsoToFlat {
+	} else if r.DrawMode == DrawModeIsoToFlat {
 		if r.transition > 0 {
 			r.transition--
 		} else {
-			r.drawMode = DrawModeFlat
+			r.DrawMode = DrawModeFlat
 		}
 	}
 
@@ -209,36 +209,36 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 }
 
 func (r *Room) ToIso() {
-	if r.drawMode == DrawModeIso {
+	if r.DrawMode == DrawModeIso {
 		return
 	}
 	r.transition = 60
-	r.drawMode = DrawModeFlatToIso
+	r.DrawMode = DrawModeFlatToIso
 }
 
 func (r *Room) ToFlat() {
-	if r.drawMode == DrawModeFlat {
+	if r.DrawMode == DrawModeFlat {
 		return
 	}
 	r.transition = 60
-	r.drawMode = DrawModeIsoToFlat
+	r.DrawMode = DrawModeIsoToFlat
 }
 
 func (r *Room) GetTilePositionGeoM(x, y int) (g ebiten.GeoM, ratio float64) {
-	if r.drawMode == DrawModeFlatToIso {
+	if r.DrawMode == DrawModeFlatToIso {
 		ratio = float64(r.transition) / 60
 		x1, y1 := GetTilePosition(x, y)
 		x2, y2 := GetTileIsoPosition(x, y)
 		x, y := x1*ratio+x2*(1-ratio), y1*ratio+y2*(1-ratio)
 		g.Translate(x, y)
-	} else if r.drawMode == DrawModeIsoToFlat {
+	} else if r.DrawMode == DrawModeIsoToFlat {
 		ratio = float64(r.transition) / 60
 		x1, y1 := GetTilePosition(x, y)
 		x2, y2 := GetTileIsoPosition(x, y)
 		x, y := x1*(1-ratio)+x2*ratio, y1*(1-ratio)+y2*ratio
 		g.Translate(x, y)
 		ratio = 1.0 - ratio
-	} else if r.drawMode == DrawModeIso {
+	} else if r.DrawMode == DrawModeIso {
 		g.Translate(GetTileIsoPosition(x, y))
 	} else {
 		g.Translate(GetTilePosition(x, y))
@@ -254,11 +254,11 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			}
 			g, ratio := r.GetTilePositionGeoM(j, i)
 			g.Concat(geom)
-			r.Tiles[i][j].SpriteStack.Draw(screen, g, r.drawMode, ratio)
+			r.Tiles[i][j].SpriteStack.Draw(screen, g, r.DrawMode, ratio)
 		}
 	}
 	for _, a := range r.Actors {
-		a.Draw(screen, r, geom, r.drawMode)
+		a.Draw(screen, r, geom, r.DrawMode)
 	}
 
 	lastX, lastY := -1, -1
@@ -297,7 +297,7 @@ func (r *Room) CenterIso() (float64, float64) {
 }
 
 func (r *Room) GetTilePositionFromCoordinate(x, y float64) (int, int) {
-	if r.drawMode == DrawModeIso {
+	if r.DrawMode == DrawModeIso {
 		return GetTileIsoPositionFromCoordinate(x, y)
 	} else {
 		return GetTilePositionFromCoordinate(x, y)
