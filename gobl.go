@@ -19,7 +19,7 @@ func main() {
 	Task("run").
 		Exec(runArgs...)
 	Task("watch").
-		Watch("./cmd/*/*.go", "./res/*", "./game/*.go", "./rooms/*.go", "./states/*.go", "./actors/*.go").
+		Watch("./cmd/*/*.go", "./res/*", "./game/*.go", "./rooms/*.go", "./states/*.go", "./actors/*.go", "./inputs/*.go", "./commands/*.go").
 		Signaler(SigQuit).
 		Run("build").
 		Run("run")
