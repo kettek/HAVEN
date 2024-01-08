@@ -13,8 +13,10 @@ type Glitch struct {
 	name             string
 	tag              string
 	X, Y             int
+	Z                int
 	movingTicker     int
 	targetX, targetY int
+	shadow           *game.SpriteStack
 	spriteStack      *game.SpriteStack
 	onInteract       InteractFunc
 	pendingCommands  []commands.Command
@@ -80,16 +82,35 @@ func (g *Glitch) Input(in inputs.Input) bool {
 func (g *Glitch) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
 	var gg ebiten.GeoM
 	var ratio float64
+	var offsetY float64
+	var offsetYRatio float64
+	if g.Z > 0 && r.DrawMode != game.DrawModeFlat {
+		gg, ratio := r.GetTilePositionGeoM(g.X, g.Y-2)
+		offsetY = gg.Element(1, 2)
+		offsetYRatio = 1.0 - ratio
+	}
 	if g.movingTicker > 0 {
 		moveRatio := float64(g.movingTicker) / 10
 		g2, _ := r.GetTilePositionGeoM(g.X, g.Y)
 		g1, _ := r.GetTilePositionGeoM(g.targetX, g.targetY)
 		gg.SetElement(0, 2, g1.Element(0, 2)*(1-moveRatio)+g2.Element(0, 2)*(moveRatio))
 		gg.SetElement(1, 2, g1.Element(1, 2)*(1-moveRatio)+g2.Element(1, 2)*(moveRatio))
+		offsetY -= g2.Element(1, 2) * moveRatio
 	} else {
 		gg, ratio = r.GetTilePositionGeoM(g.X, g.Y)
+		offsetY -= gg.Element(1, 2)
 	}
 
+	if g.Z > 0 {
+		gg2 := ebiten.GeoM{}
+		gg2.Concat(gg)
+		gg2.Concat(geom)
+		g.shadow.Draw(screen, gg2, drawMode, ratio)
+	}
+
+	if g.Z > 0 && r.DrawMode != game.DrawModeFlat {
+		gg.Translate(0, offsetY*offsetYRatio)
+	}
 	gg.Concat(geom)
 
 	g.spriteStack.Draw(screen, gg, drawMode, ratio)
@@ -144,10 +165,12 @@ func init() {
 		ss.Shaded = true
 		ss.YScale = 0.5
 		ss.LayerDistance = -1
+		shadow := game.NewSpriteStack("shadow")
 		p := &Glitch{
 			X:           x,
 			Y:           y,
 			spriteStack: ss,
+			shadow:      shadow,
 			onInteract:  interact,
 		}
 		if ctor != nil {

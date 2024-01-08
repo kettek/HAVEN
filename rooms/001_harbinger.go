@@ -127,6 +127,7 @@ func init() {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("glitch-slime")
+					s.(*actors.Glitch).Z = 1
 				},
 			},
 		},
