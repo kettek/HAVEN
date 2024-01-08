@@ -16,7 +16,7 @@ type Player struct {
 	targetX, targetY int
 	spriteStack      *game.SpriteStack
 	onInteract       InteractFunc
-	pendingCommand   commands.Command
+	pendingCommands  []commands.Command
 }
 
 func (p *Player) Command(cmd commands.Command) {
@@ -68,21 +68,27 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 		return nil
 	}
 
-	if p.pendingCommand != nil {
-		cmd = p.pendingCommand
-		p.pendingCommand = nil
+	if len(p.pendingCommands) > 0 {
+		cmd = p.pendingCommands[0]
+		p.pendingCommands = p.pendingCommands[1:]
 	}
 
 	return cmd
 }
 
 func (p *Player) Input(in inputs.Input) bool {
+	var cmd commands.Command
 	switch in := in.(type) {
 	case inputs.Direction:
 		if in.Mod {
-			p.pendingCommand = commands.Investigate{X: p.X + in.X, Y: p.Y + in.Y}
+			cmd = commands.Investigate{X: p.X + in.X, Y: p.Y + in.Y}
 		} else {
-			p.pendingCommand = commands.Move{X: p.X + in.X, Y: p.Y + in.Y}
+			cmd = commands.Move{X: p.X + in.X, Y: p.Y + in.Y}
+		}
+	}
+	if cmd != nil {
+		if len(p.pendingCommands) < 10 {
+			p.pendingCommands = append(p.pendingCommands, cmd)
 		}
 		return true
 	}

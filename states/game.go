@@ -46,16 +46,16 @@ func (g *Game) Update() error {
 	{
 		var x int
 		var y int
-		if inpututil.IsKeyJustReleased(ebiten.KeyUp) {
+		if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
 			y--
 		}
-		if inpututil.IsKeyJustReleased(ebiten.KeyDown) {
+		if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
 			y++
 		}
-		if inpututil.IsKeyJustReleased(ebiten.KeyLeft) {
+		if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
 			x--
 		}
-		if inpututil.IsKeyJustReleased(ebiten.KeyRight) {
+		if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
 			x++
 		}
 		if x != 0 || y != 0 {
