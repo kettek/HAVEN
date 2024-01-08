@@ -246,7 +246,6 @@ func (r *Room) GetTilePositionGeoM(x, y int) (g ebiten.GeoM, ratio float64) {
 }
 
 func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
-	screen.Fill(r.Color)
 	for i := range r.Tiles {
 		for j := range r.Tiles[i] {
 			if r.Tiles[i][j].SpriteStack == nil {

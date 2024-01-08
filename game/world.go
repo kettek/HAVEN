@@ -14,6 +14,7 @@ import (
 type World struct {
 	PlayerActor  Actor
 	Rooms        []*Room
+	LastRoom     *Room
 	Room         *Room
 	Camera       *Camera
 	RoutineChan  chan func() bool
@@ -22,6 +23,7 @@ type World struct {
 	Prompts      []*Prompt
 	roomBuilder  func(string) *Room
 	Color        color.NRGBA
+	colorTicker  int
 }
 
 func NewWorld(roomBuilder func(string) *Room) *World {
@@ -63,6 +65,20 @@ done:
 
 	// Process camera.
 	w.Camera.Update()
+
+	w.colorTicker++
+	if w.LastRoom != nil && w.Room != nil && w.colorTicker < 30 {
+		w.Color = color.NRGBA{
+			uint8(float64(w.LastRoom.Color.R)*(1-float64(w.colorTicker)/30) + float64(w.Room.Color.R)*(float64(w.colorTicker)/30)),
+			uint8(float64(w.LastRoom.Color.G)*(1-float64(w.colorTicker)/30) + float64(w.Room.Color.G)*(float64(w.colorTicker)/30)),
+			uint8(float64(w.LastRoom.Color.B)*(1-float64(w.colorTicker)/30) + float64(w.Room.Color.B)*(float64(w.colorTicker)/30)),
+			255,
+		}
+	} else if w.Room != nil {
+		w.Color = w.Room.Color
+	} else {
+		w.Color = color.NRGBA{0, 0, 0, 255}
+	}
 
 	// Process room.
 	if w.Room != nil {
@@ -109,6 +125,8 @@ func (w *World) Input(in inputs.Input) {
 }
 
 func (w *World) Draw(screen *ebiten.Image) {
+	screen.Fill(w.Color)
+
 	geom := ebiten.GeoM{}
 
 	geom.Translate(-w.Camera.W/2, -w.Camera.H/2)
@@ -146,7 +164,9 @@ func (w *World) EnterRoom(room *Room) {
 			}
 		})
 		<-w.FuncR(func() {
+			w.LastRoom = w.Room
 			w.Room = room
+			w.colorTicker = 0
 			if w.PlayerActor != nil {
 				x, y := w.PlayerActor.Position()
 				geom, _ := w.Room.GetTilePositionGeoM(x, y)

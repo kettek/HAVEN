@@ -143,7 +143,6 @@ func init() {
 					break
 				}
 			}
-			fmt.Println("enter called")
 			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
 				return game.Message{Text: s, Duration: d, Color: c, Font: &res.BigFont}
 			}
