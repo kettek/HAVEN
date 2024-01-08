@@ -345,7 +345,7 @@ func (r *Room) SetColor(c color.NRGBA) {
 func (r *Room) TileMessage(m Message) {
 	m.start = time.Now()
 	if m.Color.A == 0 {
-		m.Color = color.NRGBA{255, 255, 255, 255}
+		m.Color = color.NRGBA{255 - r.Color.R, 255 - r.Color.G, 255 - r.Color.B, 255}
 	}
 	if m.Font == nil {
 		m.Font = &res.DefFont
