@@ -85,7 +85,7 @@ func (g *Glitch) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 	var offsetY float64
 	var offsetYRatio float64
 	if g.Z > 0 && r.DrawMode != game.DrawModeFlat {
-		gg, ratio := r.GetTilePositionGeoM(g.X, g.Y-2)
+		gg, ratio := r.GetTilePositionGeoM(g.X, g.Y-3)
 		offsetY = gg.Element(1, 2)
 		offsetYRatio = 1.0 - ratio
 	}
