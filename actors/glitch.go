@@ -21,6 +21,8 @@ type Glitch struct {
 	onInteract       InteractFunc
 	pendingCommands  []commands.Command
 	warble           int
+	Skews            bool
+	Floats           bool
 }
 
 func (g *Glitch) Command(cmd commands.Command) {
@@ -56,8 +58,10 @@ func (g *Glitch) Command(cmd commands.Command) {
 func (g *Glitch) Update(room *game.Room) (cmd commands.Command) {
 	g.warble++
 	//g.spriteStack.Rotation += math.Sin(float64(g.warble)/100)/100 + math.Cos(float64(g.warble)/50)/50
-	g.spriteStack.SkewX = math.Sin(float64(g.warble)/600) / 600
-	g.spriteStack.SkewY = math.Cos(float64(g.warble)/300) / 300
+	if g.Skews {
+		g.spriteStack.SkewX = math.Sin(float64(g.warble)/600) / 600
+		g.spriteStack.SkewY = math.Cos(float64(g.warble)/300) / 300
+	}
 	if g.movingTicker > 0 {
 		g.movingTicker--
 		if g.movingTicker == 0 {
@@ -111,6 +115,11 @@ func (g *Glitch) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 	if g.Z > 0 && r.DrawMode != game.DrawModeFlat {
 		gg.Translate(0, offsetY*offsetYRatio)
 	}
+
+	if g.Floats {
+		gg.Translate(0, math.Sin(float64(g.warble)/40)*3)
+	}
+
 	gg.Concat(geom)
 
 	g.spriteStack.Draw(screen, gg, drawMode, ratio)

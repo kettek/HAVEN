@@ -80,7 +80,7 @@ func init() {
                               
                               
                               
-                              
+      v                       
                               
                               
                               
@@ -127,7 +127,15 @@ func init() {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("glitch-slime")
+					s.(*actors.Glitch).Skews = true
+				},
+			},
+			"v": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					s.SpriteStack().SetSprite("glitch-eye")
 					s.(*actors.Glitch).Z = 1
+					s.(*actors.Glitch).Floats = true
 				},
 			},
 		},
