@@ -163,7 +163,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 			ax, ay := cmd.Actor.Position()
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
-				if actor := r.GetActor(c.X, c.Y); actor != nil {
+				if actor := r.GetActor(c.X, c.Y); actor != nil && actor != cmd.Actor {
 					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
 						results = append(results, cmd)
 					} else {
