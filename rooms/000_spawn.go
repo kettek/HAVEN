@@ -136,6 +136,7 @@ func init() {
 			if !first {
 				return
 			}
+			res.Jukebox.Play("infrequent-lament")
 			// Get our player.
 			for _, a := range r.Actors {
 				if a.Name() == "player" {

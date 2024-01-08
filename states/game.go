@@ -36,6 +36,7 @@ func (g *Game) Room() *game.Room {
 
 func (g *Game) Update() error {
 	res.UpdateSounds()
+	res.Jukebox.Update()
 	// Get inputs.
 	if inpututil.IsKeyJustReleased(ebiten.KeyEscape) {
 		g.world.Input(inputs.Cancel{})

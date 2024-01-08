@@ -6,10 +6,86 @@ import (
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
 	"github.com/hajimehoshi/ebiten/v2/audio/wav"
 )
 
 var audioContext *audio.Context
+var Jukebox = &jukebox{}
+
+type jukebox struct {
+	lastSong *song
+	song     *song
+	fade     int
+}
+
+type song struct {
+	name   string
+	player *audio.Player
+}
+
+func newSong(name string) *song {
+	s := &song{
+		name: name,
+	}
+	sp, err := audioContext.NewPlayer(GetSoundStream(name))
+	if err != nil {
+		panic(err)
+	}
+	s.player = sp
+	s.player.SetVolume(0)
+	s.player.Play()
+	return s
+}
+
+func (j *jukebox) Update() {
+	if j.song == nil {
+		return
+	}
+	if j.fade > 0 {
+		j.fade--
+		if j.lastSong != nil {
+			j.lastSong.player.SetVolume(float64(j.fade) / 100)
+			if j.fade == 0 {
+				j.lastSong.player.Pause()
+				j.lastSong = nil
+			}
+		}
+		j.song.player.SetVolume(float64(100-j.fade) / 100)
+	}
+	if !j.song.player.IsPlaying() {
+		if err := j.song.player.Rewind(); err != nil {
+			panic(err)
+		}
+		j.song.player.Play()
+	}
+}
+
+func (j *jukebox) Play(name string) {
+	if j.song != nil && j.song.name == name {
+		return
+	}
+	j.fade = 100
+	j.lastSong = j.song
+	j.song = newSong(name)
+}
+
+var SoundStreams = map[string]*vorbis.Stream{}
+
+func GetSoundStream(name string) *vorbis.Stream {
+	if _, ok := SoundStreams[name]; !ok {
+		file, err := FS.Open(name + ".ogg")
+		if err != nil {
+			panic(err)
+		}
+		s, err := vorbis.DecodeWithSampleRate(audioContext.SampleRate(), file)
+		if err != nil {
+			panic(err)
+		}
+		SoundStreams[name] = s
+	}
+	return SoundStreams[name]
+}
 
 type SoundPlayer struct {
 	*audio.Player

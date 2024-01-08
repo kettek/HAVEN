@@ -12,6 +12,7 @@ import (
 //go:embed *.png
 //go:embed *.ttf
 //go:embed *.wav
+//go:embed *.ogg
 var FS embed.FS
 
 var loadedSpriteStacks = make(map[string][]*ebiten.Image)
