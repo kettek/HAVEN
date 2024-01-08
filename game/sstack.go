@@ -17,6 +17,8 @@ type SpriteStack struct {
 	YScale        float64
 	Highlight     bool
 	Shaded        bool
+	SkewX         float64
+	SkewY         float64
 }
 
 func NewSpriteStack(sprite string) *SpriteStack {
@@ -107,6 +109,7 @@ func (ss *SpriteStack) DrawMixed(screen *ebiten.Image, geom ebiten.GeoM, ratio f
 			c := uint8(200.0 + 55*r)
 			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
 		}
+		op.GeoM.Skew(ss.SkewX, ss.SkewY)
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
@@ -144,6 +147,7 @@ func (ss *SpriteStack) DrawFlat(screen *ebiten.Image, geom ebiten.GeoM) {
 		}
 		op.ColorScale.ScaleAlpha(ss.Alpha)
 
+		op.GeoM.Skew(ss.SkewX, ss.SkewY)
 		screen.DrawImage(ss.layers[i], op)
 	}
 }
@@ -166,6 +170,7 @@ func (ss *SpriteStack) DrawIso(screen *ebiten.Image, geom ebiten.GeoM) {
 			c := uint8(200.0 + 55*r)
 			op.ColorScale.ScaleWithColor(color.NRGBA{c, c, c, 255})
 		}
+		op.GeoM.Skew(ss.SkewX, ss.SkewY)
 		screen.DrawImage(ss.layers[i], op)
 	}
 }

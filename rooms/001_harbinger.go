@@ -66,7 +66,7 @@ func init() {
                               
                               
                               
-                              
+          V                   
                               
                               
                               
@@ -121,6 +121,12 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("harbinger-door")
+				},
+			},
+			"V": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					s.SpriteStack().SetSprite("glitch-slime")
 				},
 			},
 		},
