@@ -46,7 +46,7 @@ func init() {
              
              
              
-             
+    v  v  v  
              
              
              
@@ -71,6 +71,15 @@ func init() {
 						OffsetY: 1,
 						Target:  other,
 					}
+				},
+			},
+			"v": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					s.SpriteStack().SetSprite("glitch-eye")
+					s.(*actors.Glitch).SetName("eye")
+					s.(*actors.Glitch).Z = 1
+					s.(*actors.Glitch).Floats = true
 				},
 			},
 		},

@@ -176,8 +176,14 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 				if actor := r.GetActor(c.X, c.Y); actor != nil && actor != cmd.Actor {
 					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
 						results = append(results, cmd)
-					} else {
-						r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					} else if actor != nil {
+						var s string
+						if actor.Name() == "" {
+							s = "something"
+						} else {
+							s = fmt.Sprintf("<%s>", actor.Name())
+						}
+						r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 					}
 					continue
 				}

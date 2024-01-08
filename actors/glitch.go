@@ -150,6 +150,9 @@ func (g *Glitch) Hovered() bool {
 func (g *Glitch) Name() string {
 	return g.name
 }
+func (g *Glitch) SetName(s string) {
+	g.name = s
+}
 
 func (g *Glitch) SetTag(s string) {
 }

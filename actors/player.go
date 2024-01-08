@@ -134,6 +134,9 @@ func (p *Player) Hovered() bool {
 	return p.spriteStack.Highlight
 }
 
+func (p *Player) SetName(s string) {
+}
+
 func (p *Player) Name() string {
 	return "player"
 }

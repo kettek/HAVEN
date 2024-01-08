@@ -4,6 +4,7 @@ import (
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
+	"github.com/kettek/ebihack23/res"
 )
 
 func init() {
@@ -136,6 +137,7 @@ func init() {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("glitch-slime")
+					s.(*actors.Glitch).SetName("slime")
 					s.(*actors.Glitch).Skews = true
 				},
 			},
@@ -143,12 +145,14 @@ func init() {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("glitch-eye")
+					s.(*actors.Glitch).SetName("eye")
 					s.(*actors.Glitch).Z = 1
 					s.(*actors.Glitch).Floats = true
 				},
 			},
 		},
 		enter: func(w *game.World, r *game.Room) {
+			res.Jukebox.Play("infrequent-lament")
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
