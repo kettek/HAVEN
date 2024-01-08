@@ -46,7 +46,7 @@ func init() {
              
              
              
-    v  v  v  
+    1  2  3  
              
              
              
@@ -73,13 +73,15 @@ func init() {
 					}
 				},
 			},
-			"v": {
+			"1": {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
-					s.SpriteStack().SetSprite("glitch-eye")
-					s.(*actors.Glitch).SetName("eye")
+					s.SpriteStack().SetSprite("minion-pen")
+					s.(*actors.Glitch).SetName("minion-pen")
 					s.(*actors.Glitch).Z = 1
 					s.(*actors.Glitch).Floats = true
+					s.(*actors.Glitch).SpriteStack().YScale = 1.0
+					s.(*actors.Glitch).SpriteStack().Shaded = true
 				},
 			},
 		},
