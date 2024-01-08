@@ -56,7 +56,7 @@ func init() {
 			},
 		},
 		entities: `
-     E                        
+     T                        
                               
                               
                               
@@ -111,10 +111,19 @@ func init() {
 					s.SpriteStack().SetSprite("harbinger-door-sealed")
 				},
 			},
-			"E": {
+			"T": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("harbinger-door")
+					s.SetTag("triplets-door")
+				},
+				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					return commands.Travel{
+						Room:    "001a_triplets",
+						Tag:     "harbinger-door",
+						OffsetY: -1,
+						Target:  other,
+					}
 				},
 			},
 			"e": {
