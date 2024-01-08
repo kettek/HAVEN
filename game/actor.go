@@ -9,8 +9,8 @@ import (
 type Actor interface {
 	Update(r *Room) (cmd commands.Command)
 	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
-	SetPosition(int, int)
-	Position() (int, int)
+	SetPosition(int, int, int)
+	Position() (int, int, int)
 	Command(cmd commands.Command)
 	Input(in inputs.Input) bool
 	Hover(bool)

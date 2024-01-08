@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"image/color"
+	"sort"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -131,6 +132,15 @@ func (r *Room) Update(w *World) []commands.Command {
 		}
 	}
 
+	// Resort actors by their Z + X - Y position.
+	if len(r.PendingCommands) > 0 {
+		sort.Slice(r.Actors, func(i, j int) bool {
+			x1, y1, z1 := r.Actors[i].Position()
+			x2, y2, z2 := r.Actors[j].Position()
+			return z1 < z2 || (z1 == z2 && x1-y1 < x2-y2)
+		})
+	}
+
 	if r.OnUpdate != nil {
 		r.OnUpdate(w, r)
 	}
@@ -160,7 +170,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 		switch c := cmd.Cmd.(type) {
 		case commands.Move:
 			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
-			ax, ay := cmd.Actor.Position()
+			ax, ay, _ := cmd.Actor.Position()
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil && actor != cmd.Actor {
@@ -186,7 +196,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 			}
 		case commands.Investigate:
 			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
-			ax, ay := cmd.Actor.Position()
+			ax, ay, _ := cmd.Actor.Position()
 			s := "feel"
 			if ax-c.X < -1 || ax-c.X > 1 || ay-c.Y < -1 || ay-c.Y > 1 {
 				s = "see"
@@ -313,7 +323,7 @@ func (r *Room) GetTile(x, y int) *Tile {
 
 func (r *Room) GetActor(x, y int) Actor {
 	for _, a := range r.Actors {
-		ax, ay := a.Position()
+		ax, ay, _ := a.Position()
 		if ax == x && ay == y {
 			return a
 		}

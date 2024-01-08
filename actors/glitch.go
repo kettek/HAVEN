@@ -116,13 +116,14 @@ func (g *Glitch) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 	g.spriteStack.Draw(screen, gg, drawMode, ratio)
 }
 
-func (g *Glitch) SetPosition(x, y int) {
+func (g *Glitch) SetPosition(x, y, z int) {
 	g.X = x
 	g.Y = y
+	g.Z = z
 }
 
-func (g *Glitch) Position() (int, int) {
-	return g.X, g.Y
+func (g *Glitch) Position() (int, int, int) {
+	return g.X, g.Y, g.Z
 }
 
 func (g *Glitch) Hover(h bool) {

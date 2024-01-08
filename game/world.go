@@ -58,7 +58,7 @@ done:
 	}
 
 	if w.PlayerActor != nil {
-		x, y := w.PlayerActor.Position()
+		x, y, _ := w.PlayerActor.Position()
 		geom, _ := w.Room.GetTilePositionGeoM(x, y)
 		w.Camera.MoveTo(geom.Element(0, 2), geom.Element(1, 2))
 	}
@@ -97,14 +97,14 @@ done:
 				}
 				var x, y int
 				if actor := room.GetActorByTag(cmd.Tag); actor != nil {
-					x, y = actor.Position()
+					x, y, _ = actor.Position()
 					x += cmd.OffsetX
 					y += cmd.OffsetY
 				}
 				if targetActor != nil {
 					w.Room.RemoveActor(targetActor)
 					room.AddActor(targetActor)
-					targetActor.SetPosition(x, y)
+					targetActor.SetPosition(x, y, 0)
 				}
 				w.EnterRoom(room)
 			default:
@@ -172,7 +172,7 @@ func (w *World) EnterRoom(room *Room) {
 			}
 			w.colorTicker = 0
 			if w.PlayerActor != nil {
-				x, y := w.PlayerActor.Position()
+				x, y, _ := w.PlayerActor.Position()
 				geom, _ := w.Room.GetTilePositionGeoM(x, y)
 				w.Camera.SetPosition(geom.Element(0, 2), geom.Element(1, 2))
 			}
