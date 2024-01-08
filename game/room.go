@@ -164,9 +164,10 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
 				// First check if an actor is there.
 				if actor := r.GetActor(c.X, c.Y); actor != nil {
-					r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
 						results = append(results, cmd)
+					} else {
+						r.TileMessage(Message{Text: "something is there", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 					}
 					continue
 				}
