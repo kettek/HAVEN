@@ -44,6 +44,16 @@ func (c *Camera) CenterTo(x, y float64) {
 	c.targetTicker = 0
 }
 
+func (c *Camera) SetPosition(x, y float64) {
+	c.X = x
+	c.Y = y
+	c.pendingX = x
+	c.pendingY = y
+	c.targetX = x
+	c.targetY = y
+	c.targetTicker = 0
+}
+
 func (c *Camera) CenterOn(x, y float64) {
 	c.X = x - c.W
 	c.Y = y - c.H

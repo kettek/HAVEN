@@ -159,8 +159,8 @@ func (g *Game) Update() error {
 
 func (g *Game) Enter() {
 	if g.world == nil {
-		g.world = game.NewWorld()
-		g.world.EnterRoom(rooms.BuildRoom("000_spawn"))
+		g.world = game.NewWorld(rooms.GetRoom)
+		g.world.EnterRoom(rooms.GetRoom("000_spawn"))
 	}
 }
 func (g *Game) Leave() {

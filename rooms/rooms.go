@@ -11,4 +11,14 @@ func BuildRoom(name string) *game.Room {
 	return gRoom
 }
 
+func GetRoom(name string) *game.Room {
+	room, ok := cachedRooms[name]
+	if !ok {
+		room = BuildRoom(name)
+		cachedRooms[name] = room
+	}
+	return room
+}
+
 var rooms = make(map[string]Room)
+var cachedRooms = make(map[string]*game.Room)

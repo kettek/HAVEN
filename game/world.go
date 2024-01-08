@@ -20,12 +20,15 @@ type World struct {
 	RoutineChans []func() bool
 	Messages     []Message
 	Prompts      []*Prompt
+	roomBuilder  func(string) *Room
+	Color        color.NRGBA
 }
 
-func NewWorld() *World {
+func NewWorld(roomBuilder func(string) *Room) *World {
 	return &World{
 		Camera:      NewCamera(),
 		RoutineChan: make(chan func() bool),
+		roomBuilder: roomBuilder,
 	}
 }
 
@@ -52,15 +55,42 @@ done:
 		w.Prompts[len(w.Prompts)-1].Update()
 	}
 
+	if w.PlayerActor != nil {
+		x, y := w.PlayerActor.Position()
+		geom, _ := w.Room.GetTilePositionGeoM(x, y)
+		w.Camera.MoveTo(geom.Element(0, 2), geom.Element(1, 2))
+	}
+
 	// Process camera.
 	w.Camera.Update()
 
 	// Process room.
 	if w.Room != nil {
-		for _, cmd := range w.Room.Update(w) {
+		cmds := w.Room.Update(w)
+		for _, cmd := range cmds {
 			switch cmd := cmd.(type) {
 			case commands.Prompt:
 				w.AddPrompt(cmd.Items, "", cmd.Handler)
+			case commands.Travel:
+				room := w.roomBuilder(cmd.Room)
+				var targetActor Actor
+				if cmd.Target != nil {
+					targetActor = cmd.Target.(Actor)
+				} else if w.PlayerActor != nil {
+					targetActor = w.PlayerActor
+				}
+				var x, y int
+				if actor := room.GetActorByTag(cmd.Tag); actor != nil {
+					x, y = actor.Position()
+					x += cmd.OffsetX
+					y += cmd.OffsetY
+				}
+				if targetActor != nil {
+					w.Room.RemoveActor(targetActor)
+					room.AddActor(targetActor)
+					targetActor.SetPosition(x, y)
+				}
+				w.EnterRoom(room)
 			default:
 				fmt.Println("unhandled room->world command", cmd)
 			}
@@ -117,6 +147,12 @@ func (w *World) EnterRoom(room *Room) {
 		})
 		<-w.FuncR(func() {
 			w.Room = room
+			if w.PlayerActor != nil {
+				x, y := w.PlayerActor.Position()
+				geom, _ := w.Room.GetTilePositionGeoM(x, y)
+				w.Camera.SetPosition(geom.Element(0, 2), geom.Element(1, 2))
+			}
+
 		})
 		w.Room.OnEnter(w, w.Room)
 		<-w.FuncR(func() {

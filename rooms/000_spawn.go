@@ -13,6 +13,7 @@ import (
 
 func init() {
 	doorLocked := true
+	first := true
 	rooms["000_spawn"] = Room{
 		tiles: `// First line is ignored because lazy.
 		##D #
@@ -49,14 +50,20 @@ func init() {
 					d := s.(*actors.Interactable)
 					d.SetName("door to ![unknown]")
 					d.SpriteStack().SetSprite("haven-door")
-					d.SetTag("door")
+					d.SetTag("haven-door")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					fmt.Println("it be a door interacted with")
 					if doorLocked {
 						fmt.Println("it is locked")
+						return nil
 					}
-					return nil
+					return commands.Travel{
+						Room:    "001_harbinger",
+						Tag:     "haven-door",
+						OffsetY: -1,
+						Target:  other,
+					}
 				},
 			},
 			"T": {
@@ -98,7 +105,7 @@ func init() {
 											res.PlaySound("lock")
 										}
 										doorLocked = true
-										r.GetActorByTag("door").SpriteStack().SetSprite("haven-door")
+										r.GetActorByTag("haven-door").SpriteStack().SetSprite("haven-door")
 										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: locked"
 										return false
 									} else if index == 1 {
@@ -106,7 +113,7 @@ func init() {
 											res.PlaySound("unlock")
 										}
 										doorLocked = false
-										r.GetActorByTag("door").SpriteStack().SetSprite("haven-door-unlocked")
+										r.GetActorByTag("haven-door").SpriteStack().SetSprite("haven-door-unlocked")
 										w.Prompts[len(w.Prompts)-1].Message = "Safeguard: unlocked"
 										return false
 									}
@@ -126,6 +133,9 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
+			if !first {
+				return
+			}
 			// Get our player.
 			for _, a := range r.Actors {
 				if a.Name() == "player" {
@@ -168,6 +178,7 @@ func init() {
 			go func() {
 				<-w.MessageR(makeBigMsg("<LMB> to investigate, <RMB> to act", 8000*time.Millisecond, clr))
 			}()
+			first = false
 		},
 		leave: func(w *game.World, r *game.Room) {
 			fmt.Println("left spawn")

@@ -41,6 +41,11 @@ func (p *Interactable) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM
 	p.spriteStack.Draw(screen, g, drawMode, ratio)
 }
 
+func (p *Interactable) SetPosition(x, y int) {
+	p.X = x
+	p.Y = y
+}
+
 func (p *Interactable) Position() (int, int) {
 	return p.X, p.Y
 }

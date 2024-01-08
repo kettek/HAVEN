@@ -422,3 +422,16 @@ func (r *Room) GetActorByTag(tag string) Actor {
 	}
 	return nil
 }
+
+func (r *Room) RemoveActor(a Actor) {
+	for i, actor := range r.Actors {
+		if actor == a {
+			r.Actors = append(r.Actors[:i], r.Actors[i+1:]...)
+			return
+		}
+	}
+}
+
+func (r *Room) AddActor(a Actor) {
+	r.Actors = append(r.Actors, a)
+}
