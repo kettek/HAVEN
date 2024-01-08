@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -13,20 +14,23 @@ import (
 
 // Prompt system. It's kinda jank, but it works well enough for this project.
 type Prompt struct {
-	image    *ebiten.Image
-	Message  string
-	Items    []string
-	Selected int
-	cb       func(int, string) bool
+	image      *ebiten.Image
+	x, y       float64
+	Message    string
+	Items      []string
+	itemBounds []image.Rectangle
+	Selected   int
+	cb         func(int, string) bool
 }
 
 func NewPrompt(w, h int, items []string, msg string, cb func(int, string) bool) *Prompt {
 	p := &Prompt{
-		image:    ebiten.NewImage(w, h),
-		Message:  msg,
-		Items:    items,
-		Selected: 0,
-		cb:       cb,
+		image:      ebiten.NewImage(w, h),
+		Message:    msg,
+		Items:      items,
+		itemBounds: make([]image.Rectangle, len(items)),
+		Selected:   0,
+		cb:         cb,
 	}
 	p.Refresh()
 	return p
@@ -69,6 +73,8 @@ func (p *Prompt) Refresh() {
 		} else {
 			s = "  " + s
 		}
+
+		p.itemBounds[i] = image.Rect(x, y, x+res.Text.Measure(s).IntWidth(), y+res.Text.Measure(s).IntHeight())
 		res.Text.Draw(p.image, s, x, y)
 		// Ugh, screw it.
 		y += 16
@@ -98,6 +104,15 @@ func (p *Prompt) Input(in inputs.Input) {
 		p.cb(p.Selected, p.Items[p.Selected])
 	case inputs.Cancel:
 		p.cb(-1, "")
+	case inputs.Click:
+		for i, b := range p.itemBounds {
+			x := in.X - p.x
+			y := in.Y - p.y
+			if x >= float64(b.Min.X) && x <= float64(b.Max.X) && y >= float64(b.Min.Y) && y <= float64(b.Max.Y) {
+				p.Selected = i
+				p.cb(i, p.Items[i])
+			}
+		}
 	}
 	p.Refresh()
 }

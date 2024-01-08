@@ -62,6 +62,15 @@ func (g *Game) Update() error {
 			g.world.Input(inputs.Direction{X: x, Y: y, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
 		}
 	}
+	{
+		if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
+			x, y := ebiten.CursorPosition()
+			g.world.Input(inputs.Click{X: float64(x), Y: float64(y), Which: ebiten.MouseButtonLeft, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
+		} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
+			x, y := ebiten.CursorPosition()
+			g.world.Input(inputs.Click{X: float64(x), Y: float64(y), Which: ebiten.MouseButtonRight, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
+		}
+	}
 
 	g.world.Update()
 

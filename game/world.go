@@ -149,8 +149,9 @@ func (w *World) Draw(screen *ebiten.Image) {
 	if len(w.Prompts) != 0 {
 		geom := ebiten.GeoM{}
 		prompt := w.Prompts[len(w.Prompts)-1]
-		//geom.Translate(float64(screen.Bounds().Dx())-float64(prompt.image.Bounds().Dx())-16, float64(screen.Bounds().Dy())/2-float64(prompt.image.Bounds().Dy()/2))
-		geom.Translate(float64(screen.Bounds().Dx()/2-prompt.image.Bounds().Dx()/2), float64(screen.Bounds().Dy()/2-prompt.image.Bounds().Dy()/2))
+		prompt.x = float64(screen.Bounds().Dx()/2) - float64(prompt.image.Bounds().Dx()/2)
+		prompt.y = float64(screen.Bounds().Dy()/2) - float64(prompt.image.Bounds().Dy()/2)
+		geom.Translate(prompt.x, prompt.y)
 		prompt.Draw(screen, geom)
 	}
 }
