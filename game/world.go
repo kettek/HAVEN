@@ -166,6 +166,9 @@ func (w *World) EnterRoom(room *Room) {
 		<-w.FuncR(func() {
 			w.LastRoom = w.Room
 			w.Room = room
+			if w.LastRoom != nil {
+				w.Room.drawMode = w.LastRoom.drawMode
+			}
 			w.colorTicker = 0
 			if w.PlayerActor != nil {
 				x, y := w.PlayerActor.Position()
