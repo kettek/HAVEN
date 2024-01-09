@@ -6,7 +6,6 @@ import (
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
-	"github.com/kettek/ebihack23/res"
 )
 
 func init() {
@@ -158,11 +157,11 @@ func init() {
 			},
 		},
 		enter: func(w *game.World, r *game.Room) {
-			res.Jukebox.Play("infrequent-lament")
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
 		update: func(w *game.World, r *game.Room) {
 		},
+		song: "infrequent-lament",
 	}
 }

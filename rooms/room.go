@@ -16,6 +16,7 @@ type Room struct {
 	enter     func(w *game.World, r *game.Room)
 	leave     func(w *game.World, r *game.Room)
 	update    func(w *game.World, r *game.Room)
+	song      string
 }
 
 func (r *Room) ToGameRoom() *game.Room {
@@ -34,6 +35,7 @@ func (r *Room) ToGameRoom() *game.Room {
 	g.OnUpdate = r.update
 	g.OnEnter = r.enter
 	g.OnLeave = r.leave
+	g.Song = r.song
 
 	for y, line := range lines {
 		for x, char := range line {

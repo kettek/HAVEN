@@ -63,6 +63,7 @@ done:
 			if cmd, ok := c.(commands.CombatResult); ok {
 				fmt.Println("combat result", cmd.Winner, "won", cmd.Destroyed, cmd.ExpGained)
 				w.Combat = nil
+				res.Jukebox.Play(w.Room.Song)
 			} else if cmd, ok := c.(commands.Prompt); ok {
 				w.AddPrompt(cmd.Items, cmd.Message, cmd.Handler)
 			}
@@ -124,6 +125,7 @@ done:
 				defender := cmd.Defender.(CombatActor)
 				//w.Combat = NewCombat(384, 288, attacker, defender)
 				w.Combat = NewCombat(500, 288, attacker, defender)
+				res.Jukebox.Play("bad-health")
 			default:
 				fmt.Println("unhandled room->world command", cmd)
 			}
@@ -196,6 +198,9 @@ func (w *World) EnterRoom(room *Room) {
 			w.Room = room
 			if w.LastRoom != nil {
 				w.Room.DrawMode = w.LastRoom.DrawMode
+			}
+			if w.Room.Song != "" {
+				res.Jukebox.Play(w.Room.Song)
 			}
 			w.colorTicker = 0
 			if w.PlayerActor != nil {

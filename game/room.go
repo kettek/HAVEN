@@ -30,6 +30,7 @@ type Room struct {
 	OnLeave         func(*World, *Room)
 	RoutineChan     chan func() bool
 	RoutineChans    []func() bool
+	Song            string
 }
 
 func NewRoom(w, h int) *Room {

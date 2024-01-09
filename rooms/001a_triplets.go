@@ -102,5 +102,6 @@ func init() {
 		},
 		update: func(w *game.World, r *game.Room) {
 		},
+		song: "infrequent-lament",
 	}
 }
