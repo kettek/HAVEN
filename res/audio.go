@@ -66,6 +66,9 @@ func (j *jukebox) Play(name string) {
 	if j.song != nil && j.song.name == name {
 		return
 	}
+	if j.lastSong != nil {
+		j.lastSong.player.Pause()
+	}
 	j.fade = 100
 	j.lastSong = j.song
 	j.song = newSong(name)
