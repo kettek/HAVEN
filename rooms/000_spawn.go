@@ -140,6 +140,7 @@ func init() {
 			for _, a := range r.Actors {
 				if a.Name() == "player" {
 					w.PlayerActor = a
+					a.(*actors.Player).SetStats(10, 50, 50)
 					break
 				}
 			}

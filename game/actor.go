@@ -33,4 +33,9 @@ type CombatActor interface {
 	CurrentStats() (int, int, int)
 	MaxStats() (int, int, int)
 	ApplyDamage(int, int, int)
+	Level() int
+	SetLevel(int)
+	Exp() int
+	AddExp(int)
+	ExpValue() int
 }

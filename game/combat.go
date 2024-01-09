@@ -46,7 +46,7 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 	c.attackerFloat += 0.025
 	c.defenderFloat += 0.05
 	if c.done {
-		return commands.CombatResult{Winner: c.Attacker, Loser: c.Defender}
+		return commands.CombatResult{Winner: c.Attacker, Loser: c.Defender, ExpGained: c.Defender.ExpValue()}
 	}
 	if c.showGlitches {
 		c.showGlitches = false
@@ -81,7 +81,7 @@ func (c *Combat) Input(in inputs.Input) {
 
 func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	c.image.Clear()
-	c.image.Fill(color.NRGBA{66, 20, 66, 200})
+	c.image.Fill(color.NRGBA{66, 20, 66, 220})
 	pt := c.image.Bounds().Size()
 
 	vector.StrokeRect(c.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 120, 245, 255}, true)
@@ -137,7 +137,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.SetFont(res.DefFont.Font)
 		x := 16
 		y := 32
-		res.Text.Draw(c.image, defender.Name(), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("LVL %d %s", c.Defender.Level(), defender.Name()), x, y)
 		y += res.DefFont.Size * 2
 		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
 		y += res.DefFont.Size

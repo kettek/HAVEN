@@ -1,6 +1,8 @@
 package rooms
 
 import (
+	"math/rand"
+
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
@@ -138,7 +140,9 @@ func init() {
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("glitch-slime")
 					s.(*actors.Glitch).SetName("slime")
+					s.(*actors.Glitch).SetLevel(rand.Intn(2))
 					s.(*actors.Glitch).Skews = true
+					s.(*actors.Glitch).SetStats(5, 5, 15)
 				},
 			},
 			"v": {
@@ -146,8 +150,10 @@ func init() {
 				OnCreate: func(s game.Actor) {
 					s.SpriteStack().SetSprite("glitch-eye")
 					s.(*actors.Glitch).SetName("eye")
+					s.(*actors.Glitch).SetLevel(rand.Intn(2))
 					s.(*actors.Glitch).Z = 1
 					s.(*actors.Glitch).Floats = true
+					s.(*actors.Glitch).SetStats(15, 5, 5)
 				},
 			},
 		},

@@ -61,7 +61,7 @@ done:
 	if w.Combat != nil {
 		if c := w.Combat.Update(w, w.Room); c != nil {
 			if cmd, ok := c.(commands.CombatResult); ok {
-				fmt.Println("combat result", cmd.Winner, "won", cmd.Destroyed)
+				fmt.Println("combat result", cmd.Winner, "won", cmd.Destroyed, cmd.ExpGained)
 				w.Combat = nil
 			} else if cmd, ok := c.(commands.Prompt); ok {
 				w.AddPrompt(cmd.Items, cmd.Message, cmd.Handler)

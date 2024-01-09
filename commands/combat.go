@@ -8,6 +8,7 @@ type Combat struct {
 type CombatResult struct {
 	Winner    interface{}
 	Loser     interface{}
+	ExpGained int
 	Destroyed bool
 	Fled      bool
 }
