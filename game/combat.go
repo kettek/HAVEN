@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -11,13 +12,15 @@ import (
 )
 
 type Combat struct {
-	x, y         float64
-	Attacker     CombatActor
-	Defender     CombatActor
-	turn         int
-	done         bool
-	showGlitches bool
-	image        *ebiten.Image
+	x, y          float64
+	Attacker      CombatActor
+	Defender      CombatActor
+	attackerFloat float64
+	defenderFloat float64
+	turn          int
+	done          bool
+	showGlitches  bool
+	image         *ebiten.Image
 }
 
 func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
@@ -39,6 +42,8 @@ func (c *Combat) Refresh() {
 }
 
 func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
+	c.attackerFloat += 0.025
+	c.defenderFloat += 0.05
 	if c.done {
 		return commands.CombatResult{Winner: c.Attacker, Loser: c.Defender}
 	}
@@ -74,7 +79,40 @@ func (c *Combat) Input(in inputs.Input) {
 }
 
 func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
+	c.image.Clear()
+	c.image.Fill(color.NRGBA{66, 20, 66, 200})
+	pt := c.image.Bounds().Size()
+
+	vector.StrokeRect(c.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 120, 245, 255}, true)
+
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Concat(geom)
+
+	{
+		attacker := c.Attacker.(Actor)
+		geom := ebiten.GeoM{}
+		geom.Scale(12, 12)
+		geom.Translate(32, float64(c.image.Bounds().Dy())-72)
+		geom.Translate(math.Sin(c.attackerFloat)*4, math.Cos(c.attackerFloat)*4)
+		r := attacker.SpriteStack().Rotation
+		attacker.SpriteStack().Rotation = -math.Pi * 2
+		attacker.SpriteStack().DrawIso(c.image, geom)
+		attacker.SpriteStack().Rotation = r
+	}
+	{
+		defender := c.Defender.(Actor)
+		geom := ebiten.GeoM{}
+		geom.Scale(8, 8)
+		geom.Translate(float64(c.image.Bounds().Size().X)-64, 32)
+		geom.Translate(math.Sin(c.defenderFloat)*4, math.Cos(c.defenderFloat)*4)
+		r := defender.SpriteStack().Rotation
+		d := defender.SpriteStack().LayerDistance
+		defender.SpriteStack().Rotation = -math.Pi * 2
+		defender.SpriteStack().LayerDistance = -2
+		defender.SpriteStack().DrawIso(c.image, geom)
+		defender.SpriteStack().Rotation = r
+		defender.SpriteStack().LayerDistance = d
+	}
+
 	screen.DrawImage(c.image, op)
 }
