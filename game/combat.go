@@ -20,10 +20,16 @@ type Combat struct {
 	attackerFloat float64
 	defenderFloat float64
 	selectedItem  int
+	items         []CombatMenuItem
 	turn          int
 	doneCommand   commands.Command
 	showGlitches  bool
 	image         *ebiten.Image
+}
+
+type CombatMenuItem struct {
+	Icon *ebiten.Image
+	Text string
 }
 
 func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
@@ -31,6 +37,28 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 		Attacker: attacker,
 		Defender: defender,
 		image:    ebiten.NewImage(w, h),
+		items: []CombatMenuItem{
+			{
+				Icon: res.LoadImage("icon-attack"),
+				Text: "ATTACK",
+			},
+			{
+				Icon: res.LoadImage("icon-boost"),
+				Text: "INCREASE STAT",
+			},
+			{
+				Icon: res.LoadImage("icon-useGlitch"),
+				Text: "USE GLITCH",
+			},
+			{
+				Icon: res.LoadImage("icon-swapGlitch"),
+				Text: "SWAP GLITCH",
+			},
+			{
+				Icon: res.LoadImage("icon-escape"),
+				Text: "FLEE",
+			},
+		},
 	}
 	c.Refresh()
 
@@ -68,9 +96,9 @@ func (c *Combat) Input(in inputs.Input) {
 	switch in := in.(type) {
 	case inputs.Cancel:
 	case inputs.Confirm:
-		if c.selectedItem == 3 {
+		if c.items[c.selectedItem].Text == "FLEE" {
 			c.doneCommand = commands.CombatResult{Fled: true}
-		} else if c.selectedItem == 2 {
+		} else if c.items[c.selectedItem].Text == "SWAP GLITCH" {
 			c.showGlitches = true
 		}
 	case inputs.Direction:
@@ -81,8 +109,8 @@ func (c *Combat) Input(in inputs.Input) {
 			}
 		} else if in.Y > 0 {
 			c.selectedItem++
-			if c.selectedItem > 3 {
-				c.selectedItem = 3
+			if c.selectedItem > len(c.items)-1 {
+				c.selectedItem = len(c.items) - 1
 			}
 		}
 	case inputs.Click:
@@ -98,7 +126,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	c.image.Clear()
 
 	// combat area width
-	cw := float64(c.image.Bounds().Size().X) - 150
+	cw := float64(c.image.Bounds().Size().X) - 200
 	ch := float64(c.image.Bounds().Size().Y)
 
 	vector.DrawFilledRect(c.image, 0, 0, float32(cw), float32(ch), color.NRGBA{66, 20, 66, 220}, true)
@@ -108,9 +136,9 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 
 	// Draw right menu.
 	mx := cw + 10
-	my := 0
-	mw := 140
-	mh := ch
+	my := ch - 100
+	mw := 190
+	mh := 100
 	{
 		vector.DrawFilledRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), color.NRGBA{66, 66, 60, 220}, true)
 		vector.StrokeRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), 4, color.NRGBA{245, 245, 220, 255}, true)
@@ -122,21 +150,18 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.SetAlign(etxt.Top | etxt.Left)
 
 		res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
-		items := []string{
-			"ATTACK STAT",
-			"BOOST STAT",
-			"SWAP GLITCH",
-			"ESCAPE",
-		}
-		for i, item := range items {
-			s := item
+		for i, item := range c.items {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(mx), float64(my))
+			c.image.DrawImage(item.Icon, op)
+			s := item.Text
 			if i == c.selectedItem {
-				s = "> " + s
+				s = "   > " + s
 			} else {
-				s = "  " + s
+				s = "     " + s
 			}
-			res.Text.Draw(c.image, s, int(mx), my)
-			my += res.DefFont.Size
+			res.Text.Draw(c.image, s, int(mx), int(my))
+			my += float64(res.DefFont.Size)
 		}
 
 		res.Text.Utils().RestoreState()
@@ -157,18 +182,18 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		attacker.SpriteStack().DrawIso(c.image, geom)
 		attacker.SpriteStack().Rotation = r
 
-		mp, mf, mi := c.Attacker.MaxStats()
+		//mp, mf, mi := c.Attacker.MaxStats()
 		cp, cf, ci := c.Attacker.CurrentStats()
 		res.Text.Utils().StoreState()
 		res.Text.SetSize(float64(res.DefFont.Size))
 		res.Text.SetFont(res.DefFont.Font)
 		x := 100
 		y := c.image.Bounds().Dy() - 72
-		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d", ci), x, y)
 		y += res.DefFont.Size
-		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d/%d", cf, mf), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d", cf), x, y)
 		y += res.DefFont.Size
-		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d", cp), x, y)
 		res.Text.Utils().RestoreState()
 	}
 	{
@@ -187,7 +212,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		defender.SpriteStack().Rotation = r
 		defender.SpriteStack().LayerDistance = d
 
-		mp, mf, mi := c.Defender.MaxStats()
+		//mp, mf, mi := c.Defender.MaxStats()
 		cp, cf, ci := c.Defender.CurrentStats()
 		res.Text.Utils().StoreState()
 		res.Text.SetSize(float64(res.DefFont.Size))
@@ -196,11 +221,11 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		y := 32
 		res.Text.Draw(c.image, fmt.Sprintf("LVL %d %s", c.Defender.Level(), defender.Name()), x, y)
 		y += res.DefFont.Size * 2
-		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d", ci), x, y)
 		y += res.DefFont.Size
-		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d/%d", cf, mf), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d", cf), x, y)
 		y += res.DefFont.Size
-		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d", cp), x, y)
 		res.Text.Utils().RestoreState()
 	}
 
