@@ -9,6 +9,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/inputs"
+	"github.com/kettek/ebihack23/res"
 )
 
 type Combat struct {
@@ -93,18 +94,34 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		geom := ebiten.GeoM{}
 		geom.Scale(12, 12)
 		geom.Translate(32, float64(c.image.Bounds().Dy())-72)
-		geom.Translate(math.Sin(c.attackerFloat)*4, math.Cos(c.attackerFloat)*4)
+		geom.Translate(math.Cos(c.attackerFloat)*4, math.Sin(c.attackerFloat)*4)
 		r := attacker.SpriteStack().Rotation
 		attacker.SpriteStack().Rotation = -math.Pi * 2
 		attacker.SpriteStack().DrawIso(c.image, geom)
 		attacker.SpriteStack().Rotation = r
+
+		mp, mf, mi := c.Attacker.MaxStats()
+		cp, cf, ci := c.Attacker.CurrentStats()
+		res.Text.Utils().StoreState()
+		res.Text.SetSize(float64(res.DefFont.Size))
+		res.Text.SetFont(res.DefFont.Font)
+		x := 100
+		y := c.image.Bounds().Dy() - 72
+		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
+		y += res.DefFont.Size
+		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d/%d", cf, mf), x, y)
+		y += res.DefFont.Size
+		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
+		res.Text.Utils().RestoreState()
 	}
 	{
 		defender := c.Defender.(Actor)
 		geom := ebiten.GeoM{}
 		geom.Scale(8, 8)
 		geom.Translate(float64(c.image.Bounds().Size().X)-64, 32)
-		geom.Translate(math.Sin(c.defenderFloat)*4, math.Cos(c.defenderFloat)*4)
+		if defender.SpriteStack().SkewY == 0 {
+			geom.Translate(math.Sin(c.defenderFloat)*4, math.Cos(c.defenderFloat)*4)
+		}
 		r := defender.SpriteStack().Rotation
 		d := defender.SpriteStack().LayerDistance
 		defender.SpriteStack().Rotation = -math.Pi * 2
@@ -112,6 +129,22 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		defender.SpriteStack().DrawIso(c.image, geom)
 		defender.SpriteStack().Rotation = r
 		defender.SpriteStack().LayerDistance = d
+
+		mp, mf, mi := c.Defender.MaxStats()
+		cp, cf, ci := c.Defender.CurrentStats()
+		res.Text.Utils().StoreState()
+		res.Text.SetSize(float64(res.DefFont.Size))
+		res.Text.SetFont(res.DefFont.Font)
+		x := 16
+		y := 32
+		res.Text.Draw(c.image, defender.Name(), x, y)
+		y += res.DefFont.Size * 2
+		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
+		y += res.DefFont.Size
+		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d/%d", cf, mf), x, y)
+		y += res.DefFont.Size
+		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
+		res.Text.Utils().RestoreState()
 	}
 
 	screen.DrawImage(c.image, op)
