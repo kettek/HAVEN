@@ -189,10 +189,13 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.SetFont(res.DefFont.Font)
 		x := 100
 		y := c.image.Bounds().Dy() - 72
+		res.Text.SetColor(color.NRGBA{50, 255, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d", ci), x, y)
 		y += res.DefFont.Size
+		res.Text.SetColor(color.NRGBA{255, 50, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d", cf), x, y)
 		y += res.DefFont.Size
+		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d", cp), x, y)
 		res.Text.Utils().RestoreState()
 	}
@@ -221,10 +224,13 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		y := 32
 		res.Text.Draw(c.image, fmt.Sprintf("LVL %d %s", c.Defender.Level(), defender.Name()), x, y)
 		y += res.DefFont.Size * 2
+		res.Text.SetColor(color.NRGBA{50, 255, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d", ci), x, y)
 		y += res.DefFont.Size
+		res.Text.SetColor(color.NRGBA{255, 50, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d", cf), x, y)
 		y += res.DefFont.Size
+		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d", cp), x, y)
 		res.Text.Utils().RestoreState()
 	}
