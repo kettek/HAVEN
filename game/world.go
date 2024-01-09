@@ -122,7 +122,8 @@ done:
 			case commands.Combat:
 				attacker := cmd.Attacker.(CombatActor)
 				defender := cmd.Defender.(CombatActor)
-				w.Combat = NewCombat(384, 288, attacker, defender)
+				//w.Combat = NewCombat(384, 288, attacker, defender)
+				w.Combat = NewCombat(500, 288, attacker, defender)
 			default:
 				fmt.Println("unhandled room->world command", cmd)
 			}

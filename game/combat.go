@@ -10,6 +10,7 @@ import (
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/res"
+	"github.com/tinne26/etxt"
 )
 
 type Combat struct {
@@ -18,8 +19,9 @@ type Combat struct {
 	Defender      CombatActor
 	attackerFloat float64
 	defenderFloat float64
+	selectedItem  int
 	turn          int
-	done          bool
+	doneCommand   commands.Command
 	showGlitches  bool
 	image         *ebiten.Image
 }
@@ -45,8 +47,8 @@ func (c *Combat) Refresh() {
 func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 	c.attackerFloat += 0.025
 	c.defenderFloat += 0.05
-	if c.done {
-		return commands.CombatResult{Winner: c.Attacker, Loser: c.Defender, ExpGained: c.Defender.ExpValue()}
+	if c.doneCommand != nil {
+		return c.doneCommand
 	}
 	if c.showGlitches {
 		c.showGlitches = false
@@ -65,11 +67,24 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 func (c *Combat) Input(in inputs.Input) {
 	switch in := in.(type) {
 	case inputs.Cancel:
-		c.done = true
 	case inputs.Confirm:
-		c.showGlitches = true
+		if c.selectedItem == 3 {
+			c.doneCommand = commands.CombatResult{Fled: true}
+		} else if c.selectedItem == 2 {
+			c.showGlitches = true
+		}
 	case inputs.Direction:
-		// TODO
+		if in.Y < 0 {
+			c.selectedItem--
+			if c.selectedItem < 0 {
+				c.selectedItem = 0
+			}
+		} else if in.Y > 0 {
+			c.selectedItem++
+			if c.selectedItem > 3 {
+				c.selectedItem = 3
+			}
+		}
 	case inputs.Click:
 		x := in.X - c.x
 		y := in.Y - c.y
@@ -81,14 +96,56 @@ func (c *Combat) Input(in inputs.Input) {
 
 func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	c.image.Clear()
-	c.image.Fill(color.NRGBA{66, 20, 66, 220})
-	pt := c.image.Bounds().Size()
 
-	vector.StrokeRect(c.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 120, 245, 255}, true)
+	// combat area width
+	cw := float64(c.image.Bounds().Size().X) - 150
+	ch := float64(c.image.Bounds().Size().Y)
+
+	vector.DrawFilledRect(c.image, 0, 0, float32(cw), float32(ch), color.NRGBA{66, 20, 66, 220}, true)
+	//pt := c.image.Bounds().Size()
+
+	vector.StrokeRect(c.image, 0, 0, float32(cw), float32(ch), 4, color.NRGBA{245, 120, 245, 255}, true)
+
+	// Draw right menu.
+	mx := cw + 10
+	my := 0
+	mw := 140
+	mh := ch
+	{
+		vector.DrawFilledRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), color.NRGBA{66, 66, 60, 220}, true)
+		vector.StrokeRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), 4, color.NRGBA{245, 245, 220, 255}, true)
+		mx += 6
+		my += 4
+		res.Text.Utils().StoreState()
+		res.Text.SetSize(float64(res.DefFont.Size))
+		res.Text.SetFont(res.DefFont.Font)
+		res.Text.SetAlign(etxt.Top | etxt.Left)
+
+		res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
+		items := []string{
+			"ATTACK STAT",
+			"BOOST STAT",
+			"SWAP GLITCH",
+			"ESCAPE",
+		}
+		for i, item := range items {
+			s := item
+			if i == c.selectedItem {
+				s = "> " + s
+			} else {
+				s = "  " + s
+			}
+			res.Text.Draw(c.image, s, int(mx), my)
+			my += res.DefFont.Size
+		}
+
+		res.Text.Utils().RestoreState()
+	}
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Concat(geom)
 
+	// Draw combat scene.
 	{
 		attacker := c.Attacker.(Actor)
 		geom := ebiten.GeoM{}
@@ -118,7 +175,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		defender := c.Defender.(Actor)
 		geom := ebiten.GeoM{}
 		geom.Scale(8, 8)
-		geom.Translate(float64(c.image.Bounds().Size().X)-64, 32)
+		geom.Translate(float64(cw)-64, 32)
 		if defender.SpriteStack().SkewY == 0 {
 			geom.Translate(math.Sin(c.defenderFloat)*4, math.Cos(c.defenderFloat)*4)
 		}
