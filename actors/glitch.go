@@ -10,6 +10,7 @@ import (
 )
 
 type Glitch struct {
+	Combat
 	name             string
 	tag              string
 	X, Y             int
@@ -167,7 +168,16 @@ func (g *Glitch) SpriteStack() *game.SpriteStack {
 
 func (g *Glitch) Interact(w *game.World, r *game.Room, o game.Actor) commands.Command {
 	if g.onInteract != nil {
-		return g.onInteract(w, r, g, o)
+		cmd := g.onInteract(w, r, g, o)
+		if cmd != nil {
+			return cmd
+		}
+	}
+	if _, ok := o.(*Player); ok {
+		return commands.Combat{
+			Defender: g,
+			Attacker: o,
+		}
 	}
 	return nil
 }

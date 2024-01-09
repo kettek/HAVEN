@@ -3,8 +3,6 @@ package states
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/kettek/ebihack23/actors"
-	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/res"
@@ -124,23 +122,10 @@ func (g *Game) Update() error {
 		if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
 			rmb = true
 		}
-		if lmb || rmb {
-			for _, actor := range g.Room().Actors {
-				switch actor := actor.(type) {
-				case *actors.Player:
-					if rmb {
-						g.Room().PendingCommands = append(g.Room().PendingCommands, game.ActorCommand{
-							Actor: actor,
-							Cmd:   commands.Move{X: g.cursorX, Y: g.cursorY},
-						})
-					} else if lmb {
-						g.Room().PendingCommands = append(g.Room().PendingCommands, game.ActorCommand{
-							Actor: actor,
-							Cmd:   commands.Investigate{X: g.cursorX, Y: g.cursorY},
-						})
-					}
-				}
-			}
+		if lmb {
+			g.world.Input(inputs.MapClick{X: g.cursorX, Y: g.cursorY, Which: ebiten.MouseButtonLeft, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
+		} else if rmb {
+			g.world.Input(inputs.MapClick{X: g.cursorX, Y: g.cursorY, Which: ebiten.MouseButtonRight, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
 		}
 	}
 

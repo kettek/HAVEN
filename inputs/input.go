@@ -18,3 +18,9 @@ type Click struct {
 	Which ebiten.MouseButton
 	Mod   bool
 }
+
+type MapClick struct {
+	X, Y  int
+	Which ebiten.MouseButton
+	Mod   bool
+}

@@ -11,6 +11,7 @@ import (
 )
 
 type Player struct {
+	Combat
 	X, Y             int
 	movingTicker     int
 	targetX, targetY int
@@ -85,6 +86,12 @@ func (p *Player) Input(in inputs.Input) bool {
 		} else {
 			cmd = commands.Move{X: p.X + in.X, Y: p.Y + in.Y}
 		}
+	case inputs.MapClick:
+		if in.Which == ebiten.MouseButtonLeft {
+			cmd = commands.Investigate{X: in.X, Y: in.Y}
+		} else if in.Which == ebiten.MouseButtonRight {
+			cmd = commands.Move{X: in.X, Y: in.Y}
+		}
 	}
 	if cmd != nil {
 		if len(p.pendingCommands) < 10 {
@@ -154,7 +161,15 @@ func (p *Player) SpriteStack() *game.SpriteStack {
 
 func (p *Player) Interact(w *game.World, r *game.Room, o game.Actor) commands.Command {
 	if p.onInteract != nil {
-		return p.onInteract(w, r, p, o)
+		if cmd := p.onInteract(w, r, p, o); cmd != nil {
+			return cmd
+		}
+	}
+	if _, ok := o.(*Glitch); ok {
+		return commands.Combat{
+			Defender: o,
+			Attacker: p,
+		}
 	}
 	return nil
 }

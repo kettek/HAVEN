@@ -27,3 +27,10 @@ type ActorCommand struct {
 	Actor Actor
 	Cmd   commands.Command
 }
+
+type CombatActor interface {
+	Name() string
+	CurrentStats() (int, int, int)
+	MaxStats() (int, int, int)
+	ApplyDamage(int, int, int)
+}

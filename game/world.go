@@ -21,6 +21,7 @@ type World struct {
 	RoutineChans []func() bool
 	Messages     []Message
 	Prompts      []*Prompt
+	Combat       *Combat
 	roomBuilder  func(string) *Room
 	Color        color.NRGBA
 	colorTicker  int
@@ -55,6 +56,17 @@ done:
 
 	if len(w.Prompts) != 0 {
 		w.Prompts[len(w.Prompts)-1].Update()
+	}
+
+	if w.Combat != nil {
+		if c := w.Combat.Update(w, w.Room); c != nil {
+			if cmd, ok := c.(commands.CombatResult); ok {
+				fmt.Println("combat result", cmd.Winner, "won", cmd.Destroyed)
+				w.Combat = nil
+			} else if cmd, ok := c.(commands.Prompt); ok {
+				w.AddPrompt(cmd.Items, cmd.Message, cmd.Handler)
+			}
+		}
 	}
 
 	if w.PlayerActor != nil {
@@ -107,6 +119,10 @@ done:
 					targetActor.SetPosition(x, y, 0)
 				}
 				w.EnterRoom(room)
+			case commands.Combat:
+				attacker := cmd.Attacker.(CombatActor)
+				defender := cmd.Defender.(CombatActor)
+				w.Combat = NewCombat(384, 288, attacker, defender)
 			default:
 				fmt.Println("unhandled room->world command", cmd)
 			}
@@ -117,6 +133,8 @@ done:
 func (w *World) Input(in inputs.Input) {
 	if len(w.Prompts) > 0 {
 		w.Prompts[len(w.Prompts)-1].Input(in)
+	} else if w.Combat != nil {
+		w.Combat.Input(in)
 	} else {
 		if !w.Room.Input(w, in) {
 			// TODO: Send to camera?
@@ -145,6 +163,14 @@ func (w *World) Draw(screen *ebiten.Image) {
 		res.Text.Draw(screen, m.Text, 16, 32)
 	}
 	res.Text.Utils().RestoreState()
+
+	if w.Combat != nil {
+		geom := ebiten.GeoM{}
+		w.Combat.x = float64(screen.Bounds().Dx()/2) - float64(w.Combat.image.Bounds().Dx()/2)
+		w.Combat.y = float64(screen.Bounds().Dy()/2) - float64(w.Combat.image.Bounds().Dy()/2)
+		geom.Translate(w.Combat.x, w.Combat.y)
+		w.Combat.Draw(screen, geom)
+	}
 
 	if len(w.Prompts) != 0 {
 		geom := ebiten.GeoM{}
