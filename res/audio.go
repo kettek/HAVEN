@@ -47,6 +47,7 @@ func (j *jukebox) Update() {
 		if j.lastSong != nil {
 			j.lastSong.player.SetVolume(float64(j.fade) / 100)
 			if j.fade == 0 {
+				j.lastSong.player.SetVolume(0)
 				j.lastSong.player.Pause()
 				j.lastSong = nil
 			}
@@ -73,18 +74,15 @@ func (j *jukebox) Play(name string) {
 var SoundStreams = map[string]*vorbis.Stream{}
 
 func GetSoundStream(name string) *vorbis.Stream {
-	if _, ok := SoundStreams[name]; !ok {
-		file, err := FS.Open(name + ".ogg")
-		if err != nil {
-			panic(err)
-		}
-		s, err := vorbis.DecodeWithSampleRate(audioContext.SampleRate(), file)
-		if err != nil {
-			panic(err)
-		}
-		SoundStreams[name] = s
+	file, err := FS.Open(name + ".ogg")
+	if err != nil {
+		panic(err)
 	}
-	return SoundStreams[name]
+	s, err := vorbis.DecodeWithSampleRate(audioContext.SampleRate(), file)
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
 
 type SoundPlayer struct {
