@@ -21,9 +21,10 @@ type Prompt struct {
 	itemBounds []image.Rectangle
 	Selected   int
 	cb         func(int, string) bool
+	showExtra  bool
 }
 
-func NewPrompt(w, h int, items []string, msg string, cb func(int, string) bool) *Prompt {
+func NewPrompt(w, h int, items []string, msg string, cb func(int, string) bool, showExtra bool) *Prompt {
 	p := &Prompt{
 		image:      ebiten.NewImage(w, h),
 		Message:    msg,
@@ -31,6 +32,7 @@ func NewPrompt(w, h int, items []string, msg string, cb func(int, string) bool) 
 		itemBounds: make([]image.Rectangle, len(items)),
 		Selected:   0,
 		cb:         cb,
+		showExtra:  showExtra,
 	}
 	p.Refresh()
 	return p
@@ -50,10 +52,13 @@ func (p *Prompt) Refresh() {
 	res.Text.SetSize(float64(res.DefFont.Size))
 	res.Text.SetFont(res.DefFont.Font)
 
-	msg := fmt.Sprintf("ebiOS %s\n", res.EbiOS)
-	res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
-	res.Text.DrawWithWrap(p.image, msg, x, y, pt.X-8)
-	y += res.Text.MeasureWithWrap(msg, pt.X-8).IntHeight()
+	var msg string
+	if p.showExtra {
+		msg = fmt.Sprintf("ebiOS %s\n", res.EbiOS)
+		res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
+		res.Text.DrawWithWrap(p.image, msg, x, y, pt.X-8)
+		y += res.Text.MeasureWithWrap(msg, pt.X-8).IntHeight()
+	}
 
 	msg = p.Message + "\n"
 	res.Text.SetColor(color.NRGBA{255, 255, 255, 200})

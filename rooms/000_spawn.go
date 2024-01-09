@@ -85,12 +85,13 @@ func init() {
 					powered.Looping = true
 					powered.Next = poweroff
 					return commands.Prompt{
-						Items: prompts,
+						Items:        prompts,
+						ShowVersions: true,
 						Handler: func(index int, result string) bool {
 							if index == 0 {
 								w.AddPrompt([]string{"Return"}, "Mainframe status... corrupted.\nSolution: purge system", func(index int, result string) bool {
 									return true
-								})
+								}, true)
 								return false
 							} else if index == 1 {
 								status := "Safeguard: "
@@ -118,7 +119,7 @@ func init() {
 										return false
 									}
 									return true
-								})
+								}, true)
 								return false
 							}
 							poweron.Next = poweroff // Set poweron's next to poweroff just in case the player exits the menu quickly.
@@ -140,7 +141,7 @@ func init() {
 			for _, a := range r.Actors {
 				if a.Name() == "player" {
 					w.PlayerActor = a
-					a.(*actors.Player).SetStats(10, 50, 50)
+					a.(*actors.Player).SetStats(30, 30, 30)
 					break
 				}
 			}

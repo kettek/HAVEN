@@ -65,7 +65,7 @@ done:
 				w.Combat = nil
 				res.Jukebox.Play(w.Room.Song)
 			} else if cmd, ok := c.(commands.Prompt); ok {
-				w.AddPrompt(cmd.Items, cmd.Message, cmd.Handler)
+				w.AddPrompt(cmd.Items, cmd.Message, cmd.Handler, cmd.ShowVersions)
 			}
 		}
 	}
@@ -99,7 +99,7 @@ done:
 		for _, cmd := range cmds {
 			switch cmd := cmd.(type) {
 			case commands.Prompt:
-				w.AddPrompt(cmd.Items, "", cmd.Handler)
+				w.AddPrompt(cmd.Items, "", cmd.Handler, cmd.ShowVersions)
 			case commands.Travel:
 				room := w.roomBuilder(cmd.Room)
 				var targetActor Actor
@@ -217,7 +217,7 @@ func (w *World) EnterRoom(room *Room) {
 	}()
 }
 
-func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool) {
+func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool, showExtra bool) {
 	w.Prompts = append(w.Prompts, NewPrompt(320, 200, items, msg, func(i int, s string) bool {
 		done := false
 		if i == -1 {
@@ -230,7 +230,7 @@ func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool)
 			w.Prompts = w.Prompts[:len(w.Prompts)-1]
 		}
 		return done
-	}))
+	}, showExtra))
 }
 
 func (w *World) MessageR(msg Message) chan bool {
