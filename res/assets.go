@@ -49,3 +49,21 @@ func LoadSpriteStack(sprite string) ([]*ebiten.Image, error) {
 	loadedSpriteStacks[sprite] = layers
 	return layers, nil
 }
+
+var images = make(map[string]*ebiten.Image)
+
+func LoadImage(s string) *ebiten.Image {
+	if img, ok := images[s]; ok {
+		return img
+	}
+	b, err := FS.ReadFile(s + ".png")
+	if err != nil {
+		panic(err)
+	}
+	img, _, err := image.Decode(bytes.NewReader(b))
+	if err != nil {
+		panic(err)
+	}
+	images[s] = ebiten.NewImageFromImage(img)
+	return images[s]
+}
