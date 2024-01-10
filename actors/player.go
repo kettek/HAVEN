@@ -32,6 +32,22 @@ func (p *Player) Command(cmd commands.Command) {
 		} else if cmd.Y > p.Y {
 			p.spriteStack.Rotation = math.Pi
 		}
+	case commands.Step:
+		res.PlaySound("step")
+		x := p.X + cmd.X
+		y := p.Y + cmd.Y
+		if x < p.targetX {
+			p.spriteStack.Rotation = math.Pi * 3 / 2
+		} else if x > p.targetX {
+			p.spriteStack.Rotation = math.Pi / 2
+		} else if y < p.targetY {
+			p.spriteStack.Rotation = 0
+		} else if y > p.targetY {
+			p.spriteStack.Rotation = math.Pi
+		}
+		p.movingTicker = 10
+		p.targetX = x
+		p.targetY = y
 	case commands.Move:
 		res.PlaySound("step")
 		if cmd.X < p.targetX {
@@ -84,7 +100,7 @@ func (p *Player) Input(in inputs.Input) bool {
 		if in.Mod {
 			cmd = commands.Investigate{X: p.X + in.X, Y: p.Y + in.Y}
 		} else {
-			cmd = commands.Move{X: p.X + in.X, Y: p.Y + in.Y}
+			cmd = commands.Step{X: in.X, Y: in.Y}
 		}
 	case inputs.MapClick:
 		if in.Which == ebiten.MouseButtonLeft {

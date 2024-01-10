@@ -169,6 +169,36 @@ func (r *Room) Input(w *World, in inputs.Input) bool {
 func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 	for _, cmd := range r.PendingCommands {
 		switch c := cmd.Cmd.(type) {
+		case commands.Step:
+			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
+			ax, ay, _ := cmd.Actor.Position()
+			x := ax + c.X
+			y := ay + c.Y
+			// First check if an actor is there.
+			if actor := r.GetActor(x, y); actor != nil && actor != cmd.Actor {
+				if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
+					results = append(results, cmd)
+				} else if actor != nil {
+					var s string
+					if actor.Name() == "" {
+						s = "something"
+					} else {
+						s = fmt.Sprintf("<%s>", actor.Name())
+					}
+					r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+				}
+			} else if tile := r.GetTile(x, y); tile != nil {
+				if tile.SpriteStack == nil {
+					r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+				} else if !tile.BlocksMove {
+					cmd.Actor.Command(c)
+				} else {
+					r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					res.PlaySound("bump")
+				}
+			} else {
+				r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+			}
 		case commands.Move:
 			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
 			ax, ay, _ := cmd.Actor.Position()
