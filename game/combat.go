@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"math"
 
@@ -28,8 +29,9 @@ type Combat struct {
 }
 
 type CombatMenuItem struct {
-	Icon *ebiten.Image
-	Text string
+	Icon   *ebiten.Image
+	Text   string
+	Bounds image.Rectangle
 }
 
 func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
@@ -116,7 +118,11 @@ func (c *Combat) Input(in inputs.Input) {
 	case inputs.Click:
 		x := in.X - c.x
 		y := in.Y - c.y
-		fmt.Println("click", x, y)
+		for i, item := range c.items {
+			if x >= float64(item.Bounds.Min.X) && x <= float64(item.Bounds.Max.X) && y >= float64(item.Bounds.Min.Y) && y <= float64(item.Bounds.Max.Y) {
+				c.selectedItem = i
+			}
+		}
 		// TODO
 	}
 	c.Refresh()
@@ -161,7 +167,9 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 				s = "     " + s
 			}
 			res.Text.Draw(c.image, s, int(mx), int(my))
+			item.Bounds = image.Rect(int(mx), int(my), int(mx)+res.Text.Measure(s).IntWidth(), int(my)+res.Text.Measure(s).IntHeight())
 			my += float64(res.DefFont.Size)
+			c.items[i] = item
 		}
 
 		res.Text.Utils().RestoreState()
