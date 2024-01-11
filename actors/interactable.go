@@ -19,11 +19,18 @@ type Interactable struct {
 }
 
 func (p *Interactable) Command(cmd commands.Command) {
-	switch cmd := cmd.(type) {
-	case commands.Move:
-		p.targetX = cmd.X
-		p.targetY = cmd.Y
-	}
+}
+
+func (p *Interactable) Ready() bool {
+	return true
+}
+
+func (p *Interactable) SetReady(r bool) {
+	// Do nothing.
+}
+
+func (p *Interactable) TakeTurn() (cmd commands.Command) {
+	return nil
 }
 
 func (p *Interactable) Update(room *game.Room) (cmd commands.Command) {

@@ -8,6 +8,9 @@ import (
 
 type Actor interface {
 	Update(r *Room) (cmd commands.Command)
+	Ready() bool
+	SetReady(bool)
+	TakeTurn() (cmd commands.Command)
 	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
 	SetPosition(int, int, int)
 	Position() (int, int, int)

@@ -17,7 +17,24 @@ type Player struct {
 	targetX, targetY int
 	spriteStack      *game.SpriteStack
 	onInteract       InteractFunc
-	pendingCommands  []commands.Command
+	pendingCommand   commands.Command
+	ready            bool
+}
+
+func (p *Player) Ready() bool {
+	return p.ready && p.movingTicker == 0 && p.pendingCommand != nil
+}
+
+func (p *Player) SetReady(r bool) {
+	p.ready = r
+}
+
+func (p *Player) TakeTurn() (cmd commands.Command) {
+	if p.pendingCommand != nil {
+		cmd = p.pendingCommand
+		p.pendingCommand = nil
+	}
+	return cmd
 }
 
 func (p *Player) Command(cmd commands.Command) {
@@ -48,20 +65,6 @@ func (p *Player) Command(cmd commands.Command) {
 		p.movingTicker = 10
 		p.targetX = x
 		p.targetY = y
-	case commands.Move:
-		res.PlaySound("step")
-		if cmd.X < p.targetX {
-			p.spriteStack.Rotation = math.Pi * 3 / 2
-		} else if cmd.X > p.targetX {
-			p.spriteStack.Rotation = math.Pi / 2
-		} else if cmd.Y < p.targetY {
-			p.spriteStack.Rotation = 0
-		} else if cmd.Y > p.targetY {
-			p.spriteStack.Rotation = math.Pi
-		}
-		p.movingTicker = 10
-		p.targetX = cmd.X
-		p.targetY = cmd.Y
 	case commands.Investigate:
 		if cmd.X < p.targetX {
 			p.spriteStack.Rotation = math.Pi * 3 / 2
@@ -85,12 +88,7 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 		return nil
 	}
 
-	if len(p.pendingCommands) > 0 {
-		cmd = p.pendingCommands[0]
-		p.pendingCommands = p.pendingCommands[1:]
-	}
-
-	return cmd
+	return nil
 }
 
 func (p *Player) Input(in inputs.Input) bool {
@@ -106,13 +104,23 @@ func (p *Player) Input(in inputs.Input) bool {
 		if in.Which == ebiten.MouseButtonLeft {
 			cmd = commands.Investigate{X: in.X, Y: in.Y}
 		} else if in.Which == ebiten.MouseButtonRight {
-			cmd = commands.Move{X: in.X, Y: in.Y}
+			var x, y int
+			if in.X < p.X {
+				x = -1
+			} else if in.X > p.X {
+				x = 1
+			}
+			if in.Y < p.Y {
+				y = -1
+			} else if in.Y > p.Y {
+				y = 1
+			}
+			cmd = commands.Step{X: x, Y: y}
 		}
 	}
 	if cmd != nil {
-		if len(p.pendingCommands) < 10 {
-			p.pendingCommands = append(p.pendingCommands, cmd)
-		}
+		p.pendingCommand = cmd
+		p.SetReady(true)
 		return true
 	}
 	return false

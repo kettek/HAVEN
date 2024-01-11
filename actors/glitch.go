@@ -2,6 +2,7 @@ package actors
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/kettek/ebihack23/commands"
@@ -22,8 +23,27 @@ type Glitch struct {
 	onInteract       InteractFunc
 	pendingCommands  []commands.Command
 	warble           int
+	ready            bool
+	thinkTicker      int
 	Skews            bool
 	Floats           bool
+}
+
+func (g *Glitch) Ready() bool {
+	return g.ready
+}
+
+func (g *Glitch) SetReady(r bool) {
+	g.ready = r
+}
+
+func (g *Glitch) TakeTurn() (cmd commands.Command) {
+	g.thinkTicker--
+	if len(g.pendingCommands) > 0 {
+		cmd = g.pendingCommands[0]
+		g.pendingCommands = g.pendingCommands[1:]
+	}
+	return cmd
 }
 
 func (g *Glitch) Command(cmd commands.Command) {
@@ -31,28 +51,29 @@ func (g *Glitch) Command(cmd commands.Command) {
 	switch cmd := cmd.(type) {
 	case commands.Face:
 		if cmd.X < g.X {
-			g.spriteStack.Rotation = math.Pi * 3 / 2
+			g.spriteStack.Rotation = math.Pi / 2
 		} else if cmd.X > g.X {
-			g.spriteStack.Rotation = math.Pi / 2
-		} else if cmd.Y < g.Y {
-			g.spriteStack.Rotation = 0
-		} else if cmd.Y > g.Y {
-			g.spriteStack.Rotation = math.Pi
-		}
-	case commands.Move:
-		//res.PlaySound("step") // splort?
-		if cmd.X < g.targetX {
 			g.spriteStack.Rotation = math.Pi * 3 / 2
-		} else if cmd.X > g.targetX {
-			g.spriteStack.Rotation = math.Pi / 2
-		} else if cmd.Y < g.targetY {
-			g.spriteStack.Rotation = 0
-		} else if cmd.Y > g.targetY {
+		} else if cmd.Y < g.Y {
 			g.spriteStack.Rotation = math.Pi
+		} else if cmd.Y > g.Y {
+			g.spriteStack.Rotation = 0
+		}
+	case commands.Step:
+		x := g.X + cmd.X
+		y := g.Y + cmd.Y
+		if x < g.targetX {
+			g.spriteStack.Rotation = math.Pi / 2
+		} else if x > g.targetX {
+			g.spriteStack.Rotation = math.Pi * 3 / 2
+		} else if y < g.targetY {
+			g.spriteStack.Rotation = math.Pi
+		} else if y > g.targetY {
+			g.spriteStack.Rotation = 0
 		}
 		g.movingTicker = 10
-		g.targetX = cmd.X
-		g.targetY = cmd.Y
+		g.targetX = x
+		g.targetY = y
 	}
 }
 
@@ -72,12 +93,27 @@ func (g *Glitch) Update(room *game.Room) (cmd commands.Command) {
 		return nil
 	}
 
-	if len(g.pendingCommands) > 0 {
-		cmd = g.pendingCommands[0]
-		g.pendingCommands = g.pendingCommands[1:]
+	// Do a little wandering if our brain is empty.
+	if g.thinkTicker <= 0 {
+		g.thinkTicker = 2
+		if len(g.pendingCommands) == 0 {
+			x := rand.Intn(3) - 1
+			y := rand.Intn(3) - 1
+			if x != 0 && y != 0 {
+				if rand.Intn(2) == 0 {
+					x = 0
+				} else {
+					y = 0
+				}
+			}
+			g.pendingCommands = append(g.pendingCommands, commands.Step{
+				X: x,
+				Y: y,
+			})
+		}
 	}
 
-	return cmd
+	return nil
 }
 
 func (g *Glitch) Input(in inputs.Input) bool {
@@ -100,7 +136,7 @@ func (g *Glitch) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 		g1, _ := r.GetTilePositionGeoM(g.targetX, g.targetY)
 		gg.SetElement(0, 2, g1.Element(0, 2)*(1-moveRatio)+g2.Element(0, 2)*(moveRatio))
 		gg.SetElement(1, 2, g1.Element(1, 2)*(1-moveRatio)+g2.Element(1, 2)*(moveRatio))
-		offsetY -= g2.Element(1, 2) * moveRatio
+		offsetY -= g2.Element(1, 2)
 	} else {
 		gg, ratio = r.GetTilePositionGeoM(g.X, g.Y)
 		offsetY -= gg.Element(1, 2)

@@ -31,6 +31,7 @@ type Room struct {
 	RoutineChan     chan func() bool
 	RoutineChans    []func() bool
 	Song            string
+	turn            int
 }
 
 func NewRoom(w, h int) *Room {
@@ -125,11 +126,24 @@ func (r *Room) Update(w *World) []commands.Command {
 	// Process actors.
 	for _, a := range r.Actors {
 		if cmd := a.Update(r); cmd != nil {
-			r.PendingCommands = append(r.PendingCommands,
-				ActorCommand{
-					Actor: a,
-					Cmd:   cmd,
-				})
+			/*r.PendingCommands = append(r.PendingCommands,
+			ActorCommand{
+				Actor: a,
+				Cmd:   cmd,
+			})*/
+		}
+	}
+
+	if w.PlayerActor != nil && w.PlayerActor.Ready() {
+		for _, a := range r.Actors {
+			a.SetReady(false)
+			if cmd := a.TakeTurn(); cmd != nil {
+				r.PendingCommands = append(r.PendingCommands,
+					ActorCommand{
+						Actor: a,
+						Cmd:   cmd,
+					})
+			}
 		}
 	}
 
@@ -147,10 +161,12 @@ func (r *Room) Update(w *World) []commands.Command {
 	}
 
 	var results []commands.Command
-	for _, cmd := range r.HandlePendingCommands(w) {
-		switch c := cmd.(type) {
-		default:
-			results = append(results, c)
+	if len(r.PendingCommands) > 0 {
+		for _, cmd := range r.HandlePendingCommands(w) {
+			switch c := cmd.(type) {
+			default:
+				results = append(results, c)
+			}
 		}
 	}
 
@@ -167,18 +183,76 @@ func (r *Room) Input(w *World, in inputs.Input) bool {
 }
 
 func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
+
+	// Resolve potential collisions first.
+	var collidedActors []Actor
+	var collisionResults []commands.Command
 	for _, cmd := range r.PendingCommands {
+		a := cmd.Actor
+		bail := false
+		for _, actor := range collidedActors {
+			if actor == a {
+				bail = true
+				break
+			}
+		}
+		if bail {
+			continue
+		}
 		switch c := cmd.Cmd.(type) {
 		case commands.Step:
-			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
 			ax, ay, _ := cmd.Actor.Position()
 			x := ax + c.X
 			y := ay + c.Y
 			// First check if an actor is there.
 			if actor := r.GetActor(x, y); actor != nil && actor != cmd.Actor {
 				if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
+					collisionResults = append(collisionResults, cmd)
+					collidedActors = append(collidedActors, actor)
+					collidedActors = append(collidedActors, a)
+					x1, y1, _ := actor.Position()
+					x2, y2, _ := a.Position()
+					a.Command(commands.Face{X: x1, Y: y1})
+					actor.Command(commands.Face{X: x2, Y: y2})
+				} else if actor != nil && w.PlayerActor == a {
+					var s string
+					if actor.Name() == "" {
+						s = "something"
+					} else {
+						s = fmt.Sprintf("<%s>", actor.Name())
+					}
+					r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+				}
+			}
+		}
+	}
+	results = append(results, collisionResults...)
+
+	for _, cmd := range r.PendingCommands {
+		a := cmd.Actor
+		bail := false
+		for _, actor := range collidedActors {
+			if actor == a {
+				bail = true
+				break
+			}
+		}
+		if bail {
+			continue
+		}
+		switch c := cmd.Cmd.(type) {
+		case commands.Step:
+			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
+			ax, ay, _ := cmd.Actor.Position()
+			x := ax + c.X
+			y := ay + c.Y
+			// Check if our destination is blocked.
+			if actor := r.GetActor(x, y); actor != nil && actor != cmd.Actor {
+				if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
 					results = append(results, cmd)
-				} else if actor != nil {
+					collidedActors = append(collidedActors, actor)
+					collidedActors = append(collidedActors, a)
+				} else if actor != nil && w.PlayerActor == a {
 					var s string
 					if actor.Name() == "" {
 						s = "something"
@@ -189,45 +263,19 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 				}
 			} else if tile := r.GetTile(x, y); tile != nil {
 				if tile.SpriteStack == nil {
-					r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					if w.PlayerActor == a {
+						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					}
 				} else if !tile.BlocksMove {
 					cmd.Actor.Command(c)
 				} else {
-					r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					if w.PlayerActor == a {
+						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					}
 					res.PlaySound("bump")
 				}
 			} else {
-				r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
-			}
-		case commands.Move:
-			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
-			ax, ay, _ := cmd.Actor.Position()
-			if ax-c.X >= -1 && ax-c.X <= 1 && ay-c.Y >= -1 && ay-c.Y <= 1 {
-				// First check if an actor is there.
-				if actor := r.GetActor(c.X, c.Y); actor != nil && actor != cmd.Actor {
-					if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
-						results = append(results, cmd)
-					} else if actor != nil {
-						var s string
-						if actor.Name() == "" {
-							s = "something"
-						} else {
-							s = fmt.Sprintf("<%s>", actor.Name())
-						}
-						r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
-					}
-					continue
-				}
-				if tile := r.GetTile(c.X, c.Y); tile != nil {
-					if tile.SpriteStack == nil {
-						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
-					} else if !tile.BlocksMove {
-						cmd.Actor.Command(c)
-					} else {
-						r.TileMessage(Message{Text: "the way is blocked", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
-						res.PlaySound("bump")
-					}
-				} else {
+				if w.PlayerActor == a {
 					r.TileMessage(Message{Text: "impossible", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
 				}
 			}
