@@ -20,6 +20,7 @@ type Room struct {
 	TileMessages    []Message
 	Color           color.NRGBA
 	targetColor     color.NRGBA
+	Darkness        float64
 	colorTicker     int
 	iso             bool
 	transition      int
@@ -107,6 +108,12 @@ func (r *Room) Update(w *World) []commands.Command {
 	for i := range r.Tiles {
 		for j := range r.Tiles[i] {
 			r.Tiles[i][j].Update()
+			if w.PlayerActor != nil {
+				x, y, _ := w.PlayerActor.Position()
+				if r.Tiles[i][j].SpriteStack != nil {
+					r.Tiles[i][j].SpriteStack.Alpha = 1.0 - float32((x-j)*(x-j)+(y-i)*(y-i))/100*float32(r.Darkness)
+				}
+			}
 		}
 	}
 
@@ -132,6 +139,13 @@ func (r *Room) Update(w *World) []commands.Command {
 				Actor: a,
 				Cmd:   cmd,
 			})*/
+		}
+		if w.PlayerActor != nil {
+			j, i, _ := a.Position()
+			x, y, _ := w.PlayerActor.Position()
+			if a.SpriteStack() != nil {
+				a.SpriteStack().Alpha = 1.0 - float32((x-j)*(x-j)+(y-i)*(y-i))/100*float32(r.Darkness)
+			}
 		}
 	}
 

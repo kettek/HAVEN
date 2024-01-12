@@ -43,7 +43,7 @@ func init() {
 		},
 		entities: `
 		     
-		     
+		                                                     E
 		     
 		     
 		     
@@ -54,6 +54,23 @@ func init() {
 		             DT
 		`,
 		entityMap: EntityDefs{
+			"E": {
+				Actor: "interactable",
+				OnCreate: func(s game.Actor) {
+					d := s.(*actors.Interactable)
+					d.SetName("door to ![harbinger]")
+					d.SpriteStack().SetSprite("harbinger-door")
+					d.SetTag("hall-door")
+				},
+				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					return commands.Travel{
+						Room:    "001_harbinger",
+						Tag:     "hall-door",
+						OffsetY: -1,
+						Target:  other,
+					}
+				},
+			},
 			"D": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {

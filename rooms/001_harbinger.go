@@ -94,14 +94,14 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					d := s.(*actors.Interactable)
-					d.SetName("door to haven")
-					d.SetTag("haven-door")
+					d.SetName("door to ![haven hall]")
+					d.SetTag("hall-door")
 					d.SpriteStack().SetSprite("haven-door-unlocked")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					return commands.Travel{
-						Room:    "000_spawn",
-						Tag:     "haven-door",
+						Room:    "000a_hall",
+						Tag:     "hall-door",
 						OffsetY: 1,
 						Target:  other,
 					}
@@ -157,6 +157,9 @@ func init() {
 			},
 		},
 		enter: func(w *game.World, r *game.Room) {
+			<-w.FuncR(func() {
+				r.Darkness = 1.0
+			})
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
