@@ -28,6 +28,7 @@ type Room struct {
 	OnUpdate        func(*World, *Room)
 	OnEnter         func(*World, *Room)
 	OnLeave         func(*World, *Room)
+	OnTurn          func(*World, *Room)
 	RoutineChan     chan func() bool
 	RoutineChans    []func() bool
 	Song            string
@@ -144,6 +145,9 @@ func (r *Room) Update(w *World) []commands.Command {
 						Cmd:   cmd,
 					})
 			}
+		}
+		if r.OnTurn != nil {
+			r.OnTurn(w, r)
 		}
 	}
 

@@ -2,8 +2,7 @@ package rooms
 
 import (
 	"fmt"
-	"image/color"
-	"time"
+	"math"
 
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
@@ -13,14 +12,19 @@ import (
 
 func init() {
 	doorLocked := true
-	first := true
-	rooms["000_spawn"] = Room{
+	rooms["000a_hall"] = Room{
 		tiles: `// First line is ignored because lazy.
-		##D #
-		# ..#
-		#...#
-		# . #
-		#####
+		#   ##   ##   ##   ##   ##    ###v###             ### ###       
+		##tv###tv###tv###tv###tv##      #_#                 #d#         
+		# __   __   __   __   __         _                   _          
+		#  _    _    _    _    _       .......               _        # 
+		##........................   ....   ....  ......     ...      ##
+		#.............................        ..................   ,,,,,
+		##........................   ....   ....  ......     ...      ##
+		#  _    _    _    _    _       .......                        # 
+		#  __   __   __   __   __        _                   ,          
+		###^T###^T###^D###^T###^T#      #_#                 #,#         
+		 #   ##   ##   ##   ##   #    ###^###             ###,###       
 		`,
 		tileDefs: TileDefs{
 			"#": {
@@ -32,36 +36,42 @@ func init() {
 				Name:   "floor of haven",
 				Sprite: "haven-floor",
 			},
+			"_": {
+				Name:   "path of haven",
+				Sprite: "haven-path",
+			},
 		},
 		entities: `
-		  DT 
-		     
-		  @  
 		     
 		     
+		     
+		     
+		     
+		     
+		     
+		     
+		     
+		             DT
 		`,
 		entityMap: EntityDefs{
-			"@": {
-				Actor: "player",
-			},
 			"D": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					d := s.(*actors.Interactable)
-					d.SetName("door to ![unknown]")
+					d.SetName("door to ![haven]")
 					d.SpriteStack().SetSprite("haven-door")
 					d.SetTag("haven-door")
+					d.SpriteStack().Rotation = math.Pi
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
-					fmt.Println("it be a door interacted with")
 					if doorLocked {
-						fmt.Println("it is locked")
 						return nil
 					}
+
 					return commands.Travel{
-						Room:    "000a_hall",
+						Room:    "000_spawn",
 						Tag:     "haven-door",
-						OffsetY: -1,
+						OffsetY: 1,
 						Target:  other,
 					}
 				},
@@ -72,10 +82,11 @@ func init() {
 					s.(*actors.Interactable).SetName("terminal")
 					s.SpriteStack().SetSprite("terminal-off")
 					s.SetTag("terminal")
+					s.SpriteStack().Rotation = math.Pi
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					r.GetActorByTag("terminal").SpriteStack().SetSprite("terminal")
-					prompts := []string{"Query Mainframe", "Manage Safeguard", "Leave"}
+					prompts := []string{"Query z-level SHOU", "Manage Safeguard", "Leave"}
 					//res.PlaySound("button")
 					poweron := res.PlaySound("poweron")
 					powered := res.GetSound("powered")
@@ -89,7 +100,7 @@ func init() {
 						ShowVersions: true,
 						Handler: func(index int, result string) bool {
 							if index == 0 {
-								w.AddPrompt([]string{"Return"}, "Mainframe status... corrupted.\nSolution: purge system", func(index int, result string) bool {
+								w.AddPrompt([]string{"Return"}, "01-05: lost\n06   : released\n07-08: missing\n09   : ???", func(index int, result string) bool {
 									return true
 								}, true)
 								return false
@@ -134,52 +145,6 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
-			if !first {
-				return
-			}
-			// Get our player.
-			for _, a := range r.Actors {
-				if a.Name() == "player" {
-					w.PlayerActor = a
-					a.(*actors.Player).SetStats(10, 10, 10)
-					break
-				}
-			}
-			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
-				return game.Message{Text: s, Duration: d, Color: c, Font: &res.BigFont}
-			}
-			<-w.FuncR(func() {
-				r.Color = color.NRGBA{0, 0, 0, 255}
-			})
-			delayTimeR(2 * time.Second)
-			clr := color.NRGBA{0, 255, 0, 255}
-			/*s := "/activate SHOU"
-			for i := range s {
-				u := ""
-				if i%2 == 0 {
-					u = "_"
-				}
-				<-w.MessageR(makeBigMsg(string(s[:i])+u, 200*time.Millisecond, clr))
-			}
-			<-w.MessageR(makeBigMsg(s, 1000*time.Millisecond, clr))
-			<-r.DropInR()
-			<-w.MessageR(makeBigMsg(".", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg(".", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("..", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))
-			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("defense system <SHOU> online", 500*time.Millisecond, color.NRGBA{205, 205, 180, 255}))*/
-			<-w.FuncR(func() {
-				r.SetColor(color.NRGBA{205, 205, 180, 255})
-			})
-			go func() {
-				<-w.MessageR(makeBigMsg("<LMB> to investigate, <RMB> to act", 8000*time.Millisecond, clr))
-			}()
-			first = false
 		},
 		leave: func(w *game.World, r *game.Room) {
 			fmt.Println("left spawn")
