@@ -12,19 +12,20 @@ import (
 )
 
 type World struct {
-	PlayerActor  Actor
-	Rooms        []*Room
-	LastRoom     *Room
-	Room         *Room
-	Camera       *Camera
-	RoutineChan  chan func() bool
-	RoutineChans []func() bool
-	Messages     []Message
-	Prompts      []*Prompt
-	Combat       *Combat
-	roomBuilder  func(string) *Room
-	Color        color.NRGBA
-	colorTicker  int
+	PlayerActor      Actor
+	Rooms            []*Room
+	LastRoom         *Room
+	Room             *Room
+	Camera           *Camera
+	RoutineChan      chan func() bool
+	RoutineChans     []func() bool
+	Messages         []Message
+	Prompts          []*Prompt
+	Combat           *Combat
+	roomBuilder      func(string) *Room
+	Color            color.NRGBA
+	colorTicker      int
+	postProcessImage *ebiten.Image
 }
 
 func NewWorld(roomBuilder func(string) *Room) *World {
@@ -146,6 +147,9 @@ func (w *World) Input(in inputs.Input) {
 }
 
 func (w *World) Draw(screen *ebiten.Image) {
+	if w.postProcessImage == nil {
+		w.postProcessImage = ebiten.NewImage(screen.Bounds().Dx(), screen.Bounds().Dy())
+	}
 	screen.Fill(w.Color)
 
 	geom := ebiten.GeoM{}
@@ -158,6 +162,12 @@ func (w *World) Draw(screen *ebiten.Image) {
 	if w.Room != nil {
 		w.Room.Draw(screen, geom)
 	}
+
+	w.postProcessImage.Clear()
+	if w.Room != nil {
+		w.Room.DrawPost(screen, w.postProcessImage, geom)
+	}
+	screen.DrawImage(w.postProcessImage, nil)
 
 	res.Text.Utils().StoreState()
 	if len(w.Messages) > 0 {

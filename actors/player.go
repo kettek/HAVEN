@@ -143,6 +143,8 @@ func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 
 	p.spriteStack.Draw(screen, g, drawMode, ratio)
 }
+func (p *Player) DrawPost(screen, post *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
+}
 
 func (p *Player) SetPosition(x, y, z int) {
 	p.X = x

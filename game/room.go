@@ -395,6 +395,12 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	res.Text.Utils().RestoreState()
 }
 
+func (r *Room) DrawPost(screen, post *ebiten.Image, geom ebiten.GeoM) {
+	for _, a := range r.Actors {
+		a.DrawPost(screen, post, r, geom, r.DrawMode)
+	}
+}
+
 func (r *Room) Size() (int, int) {
 	return len(r.Tiles[0]), len(r.Tiles)
 }

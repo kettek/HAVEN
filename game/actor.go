@@ -12,6 +12,7 @@ type Actor interface {
 	SetReady(bool)
 	TakeTurn() (cmd commands.Command)
 	Draw(screen *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
+	DrawPost(screen, post *ebiten.Image, r *Room, geom ebiten.GeoM, drawMode DrawMode)
 	SetPosition(int, int, int)
 	Position() (int, int, int)
 	Command(cmd commands.Command)

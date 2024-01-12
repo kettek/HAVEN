@@ -1,6 +1,8 @@
 package actors
 
 import (
+	"fmt"
+	"image"
 	"math"
 	"math/rand"
 
@@ -9,6 +11,14 @@ import (
 	"github.com/kettek/ebihack23/game"
 	"github.com/kettek/ebihack23/inputs"
 )
+
+type WarpEffect struct {
+	lifetime         int
+	x, y             int
+	w, h             int
+	offsetX, offsetY float64
+	image            *ebiten.Image
+}
 
 type Glitch struct {
 	Combat
@@ -27,6 +37,7 @@ type Glitch struct {
 	thinkTicker      int
 	Skews            bool
 	Floats           bool
+	warpEffects      []WarpEffect
 }
 
 func (g *Glitch) Ready() bool {
@@ -78,6 +89,41 @@ func (g *Glitch) Command(cmd commands.Command) {
 }
 
 func (g *Glitch) Update(room *game.Room) (cmd commands.Command) {
+	if len(g.warpEffects) == 0 {
+		for i := 0; i < 3; i++ {
+			x1 := -1 - rand.Intn(2)
+			y1 := -1 - rand.Intn(2)
+			x2 := 1 + rand.Intn(2)
+			y2 := 1 + rand.Intn(2)
+			g.warpEffects = append(g.warpEffects, WarpEffect{
+				lifetime: 10 + rand.Intn(30),
+				x:        x1,
+				y:        y1,
+				w:        x2 - x1,
+				h:        y2 - y1,
+				offsetX:  float64(-12 + rand.Intn(24)),
+				offsetY:  float64(-12 + rand.Intn(24)),
+			})
+		}
+	}
+
+	for i := range g.warpEffects {
+		g.warpEffects[i].lifetime--
+		if g.warpEffects[i].lifetime <= 0 {
+			x1 := -1 - rand.Intn(2)
+			y1 := -1 - rand.Intn(2)
+			x2 := 1 + rand.Intn(2)
+			y2 := 1 + rand.Intn(2)
+			g.warpEffects[i].lifetime = rand.Intn(30) + 10
+			g.warpEffects[i].x = x1
+			g.warpEffects[i].y = y1
+			g.warpEffects[i].w = x2 - x1
+			g.warpEffects[i].h = y2 - y1
+			g.warpEffects[i].offsetX = float64(-12 + rand.Intn(24))
+			g.warpEffects[i].offsetY = float64(-12 + rand.Intn(24))
+		}
+	}
+
 	g.warble++
 	//g.spriteStack.Rotation += math.Sin(float64(g.warble)/100)/100 + math.Cos(float64(g.warble)/50)/50
 	if g.Skews {
@@ -160,6 +206,28 @@ func (g *Glitch) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 	gg.Concat(geom)
 
 	g.spriteStack.Draw(screen, gg, drawMode, ratio)
+}
+func (g *Glitch) DrawPost(screen, post *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
+	// Get our position in the world.
+	tg, _ := r.GetTilePositionGeoM(g.X, g.Y)
+	for _, warp := range g.warpEffects {
+		var gg ebiten.GeoM
+		var gg2 ebiten.GeoM
+		gg.Concat(tg)
+		gg2.Concat(tg)
+		gg.Translate(float64(warp.x), float64(warp.y))
+		gg2.Translate(float64(warp.x), float64(warp.y))
+		gg.Concat(geom)
+		x := gg.Element(0, 2)
+		y := gg.Element(1, 2)
+		warp.image = screen.SubImage(image.Rect(int(x), int(y), int(x)+warp.w, int(y)+warp.h)).(*ebiten.Image)
+		gg2.Translate(warp.offsetX, warp.offsetY)
+		gg2.Concat(geom)
+		fmt.Println("grabbed from", int(warp.x), int(warp.y), int(warp.x+warp.w), int(warp.y+warp.h))
+		post.DrawImage(warp.image, &ebiten.DrawImageOptions{
+			GeoM: gg2,
+		})
+	}
 }
 
 func (g *Glitch) SetPosition(x, y, z int) {
