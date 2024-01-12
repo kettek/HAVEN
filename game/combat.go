@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -20,48 +21,248 @@ type Combat struct {
 	Defender      CombatActor
 	attackerFloat float64
 	defenderFloat float64
-	selectedItem  int
-	items         []CombatMenuItem
+	menu          *CombatMenu
+	menus         CombatMenus
 	turn          int
 	doneCommand   commands.Command
 	showGlitches  bool
 	image         *ebiten.Image
+	isEnemyTurn   bool
+	menuMode      CombatMenuMode
+	action        CombatAction
 }
 
+type CombatAction interface {
+	Done() bool
+	Update(c *Combat)
+	IsAttacker() bool
+}
+
+type CombatActionAttack struct {
+	stat       string
+	isAttacker bool
+	timer      int
+}
+
+func (c CombatActionAttack) Done() bool {
+	return c.timer >= 60
+}
+
+func (c *CombatActionAttack) Update(cmb *Combat) {
+	c.timer++
+}
+
+func (c CombatActionAttack) IsAttacker() bool {
+	return c.isAttacker
+}
+
+type CombatActionBoost struct {
+	stat       string
+	isAttacker bool
+	timer      int
+}
+
+func (c CombatActionBoost) Done() bool {
+	return c.timer >= 60
+}
+
+func (c *CombatActionBoost) Update(cmd *Combat) {
+	c.timer++
+}
+
+func (c CombatActionBoost) IsAttacker() bool {
+	return c.isAttacker
+}
+
+type CombatActionFlee struct {
+	isAttacker bool
+	canFlee    bool
+	timer      int
+}
+
+func (c CombatActionFlee) Done() bool {
+	return c.timer >= 30
+}
+
+func (c *CombatActionFlee) Update(cmb *Combat) {
+	c.timer++
+}
+
+func (c CombatActionFlee) IsAttacker() bool {
+	return c.isAttacker
+}
+
+type CombatMenu struct {
+	items         []CombatMenuItem
+	selectedIndex int
+}
+
+type CombatMenus struct {
+	main, attack, boost, swap, use CombatMenu
+}
+
+type CombatMenuMode int
+
+const (
+	CombatMenuModeMain CombatMenuMode = iota
+	CombatMenuModeAttackStat
+	CombatMenuModeBoostStat
+	CombatMenuModeUseGlitch
+	CombatMenuModeSwapGlitch
+)
+
 type CombatMenuItem struct {
-	Icon   *ebiten.Image
-	Text   string
-	Bounds image.Rectangle
+	Icon    *ebiten.Image
+	SubIcon *ebiten.Image
+	Text    string
+	Bounds  image.Rectangle
+	Trigger func()
+}
+
+func (c *Combat) SwapMenu(mode CombatMenuMode) {
+	c.menuMode = mode
+	switch mode {
+	case CombatMenuModeMain:
+		c.menu = &c.menus.main
+	case CombatMenuModeAttackStat:
+		c.menu = &c.menus.attack
+	case CombatMenuModeBoostStat:
+		c.menu = &c.menus.boost
+	case CombatMenuModeSwapGlitch:
+		c.menu = &c.menus.swap
+	case CombatMenuModeUseGlitch:
+		c.menu = &c.menus.use
+	}
+}
+
+func (c *Combat) SetAction(action CombatAction) {
+	c.action = action
 }
 
 func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
-	c := &Combat{
+	var c *Combat
+	c = &Combat{
 		Attacker: attacker,
 		Defender: defender,
 		image:    ebiten.NewImage(w, h),
-		items: []CombatMenuItem{
-			{
-				Icon: res.LoadImage("icon-attack"),
-				Text: "ATTACK",
+		menus: CombatMenus{
+			main: CombatMenu{
+				items: []CombatMenuItem{
+					{
+						Icon: res.LoadImage("icon-attack"),
+						Text: "ATTACK",
+						Trigger: func() {
+							c.SwapMenu(CombatMenuModeAttackStat)
+						},
+					},
+					{
+						Icon: res.LoadImage("icon-boost"),
+						Text: "INCREASE STAT",
+						Trigger: func() {
+							c.SwapMenu(CombatMenuModeBoostStat)
+						},
+					},
+					{
+						Icon: res.LoadImage("icon-useGlitch"),
+						Text: "USE GLITCH",
+						Trigger: func() {
+							c.SwapMenu(CombatMenuModeUseGlitch)
+						},
+					},
+					{
+						Icon: res.LoadImage("icon-swapGlitch"),
+						Text: "SWAP GLITCH",
+						Trigger: func() {
+							c.SwapMenu(CombatMenuModeSwapGlitch)
+						},
+					},
+					{
+						Icon: res.LoadImage("icon-escape"),
+						Text: "FLEE",
+						Trigger: func() {
+							// We pre-roll the flee results.
+							_, f, i := c.Defender.CurrentStats()
+							a := &CombatActionFlee{isAttacker: true}
+							r := rand.Intn(100 + f + i)
+							if r < 50 {
+								a.canFlee = true
+							}
+							c.SetAction(a)
+						},
+					},
+				},
 			},
-			{
-				Icon: res.LoadImage("icon-boost"),
-				Text: "INCREASE STAT",
+			attack: CombatMenu{
+				items: []CombatMenuItem{
+					{
+						Icon:    res.LoadImage("icon-integrity"),
+						SubIcon: res.LoadImage("subicon-attack"),
+						Text:    "INTEGRITY",
+						Trigger: func() {
+							c.SetAction(&CombatActionAttack{stat: "INTEGRITY", isAttacker: true})
+						},
+					},
+					{
+						Icon:    res.LoadImage("icon-firewall"),
+						SubIcon: res.LoadImage("subicon-attack"),
+						Text:    "FIREWALL",
+						Trigger: func() {
+							c.SetAction(&CombatActionAttack{stat: "FIREWALL", isAttacker: true})
+						},
+					},
+					{
+						Icon:    res.LoadImage("icon-penetration"),
+						SubIcon: res.LoadImage("subicon-attack"),
+						Text:    "PENETRATION",
+						Trigger: func() {
+							c.SetAction(&CombatActionAttack{stat: "PENETRATION", isAttacker: true})
+						},
+					},
+					{
+						Text: "CANCEL",
+						Trigger: func() {
+							c.SwapMenu(CombatMenuModeMain)
+						},
+					},
+				},
 			},
-			{
-				Icon: res.LoadImage("icon-useGlitch"),
-				Text: "USE GLITCH",
-			},
-			{
-				Icon: res.LoadImage("icon-swapGlitch"),
-				Text: "SWAP GLITCH",
-			},
-			{
-				Icon: res.LoadImage("icon-escape"),
-				Text: "FLEE",
+			boost: CombatMenu{
+				items: []CombatMenuItem{
+					{
+						Icon:    res.LoadImage("icon-integrity"),
+						SubIcon: res.LoadImage("subicon-boost"),
+						Text:    "INTEGRITY",
+						Trigger: func() {
+							c.SetAction(&CombatActionBoost{stat: "INTEGRITY", isAttacker: true})
+						},
+					},
+					{
+						Icon:    res.LoadImage("icon-firewall"),
+						SubIcon: res.LoadImage("subicon-boost"),
+						Text:    "FIREWALL",
+						Trigger: func() {
+							c.SetAction(&CombatActionBoost{stat: "FIREWALL", isAttacker: true})
+						},
+					},
+					{
+						Icon:    res.LoadImage("icon-penetration"),
+						SubIcon: res.LoadImage("subicon-boost"),
+						Text:    "PENETRATION",
+						Trigger: func() {
+							c.SetAction(&CombatActionBoost{stat: "PENETRATION", isAttacker: true})
+						},
+					},
+					{
+						Text: "CANCEL",
+						Trigger: func() {
+							c.SwapMenu(CombatMenuModeMain)
+						},
+					},
+				},
 			},
 		},
 	}
+	c.SwapMenu(CombatMenuModeMain)
 	c.Refresh()
 
 	return c
@@ -74,11 +275,44 @@ func (c *Combat) Refresh() {
 	vector.StrokeRect(c.image, 0, 0, float32(pt.X), float32(pt.Y), 4, color.NRGBA{245, 120, 245, 255}, true)
 }
 
+func (c *Combat) GenerateEnemyAction() CombatAction {
+	// FIXME: This is a placeholder. Enemy actions should be based on the enemy's stats as well as tendencies.
+	targets := []string{"INTEGRITY", "FIREWALL", "PENETRATION"}
+	t := targets[rand.Intn(len(targets))]
+	if rand.Intn(2) == 0 {
+		return &CombatActionAttack{stat: t, isAttacker: false}
+	}
+	return &CombatActionBoost{stat: t, isAttacker: false}
+}
+
 func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 	c.attackerFloat += 0.025
 	c.defenderFloat += 0.05
 	if c.doneCommand != nil {
 		return c.doneCommand
+	}
+	if c.action != nil {
+		c.action.Update(c)
+		if c.action.Done() {
+			// If the action is not the attacker (which is always the player), that means the turn is over and we can swap back to main menu.
+			if !c.action.IsAttacker() {
+				c.SwapMenu(CombatMenuModeMain)
+				c.action = nil
+			} else {
+				// Otherwise, it means the enemy should do an action (if not fleeing).
+				if a, ok := c.action.(*CombatActionFlee); ok {
+					if a.canFlee {
+						fmt.Println("fled successfully")
+						c.doneCommand = commands.CombatResult{Fled: true}
+					} else {
+						fmt.Println("escape is denied!")
+						c.SetAction(c.GenerateEnemyAction())
+					}
+				} else {
+					c.SetAction(c.GenerateEnemyAction())
+				}
+			}
+		}
 	}
 	if c.showGlitches {
 		c.showGlitches = false
@@ -95,32 +329,35 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 }
 
 func (c *Combat) Input(in inputs.Input) {
+	if c.action != nil {
+		return
+	}
 	switch in := in.(type) {
 	case inputs.Cancel:
+		c.SwapMenu(CombatMenuModeMain)
 	case inputs.Confirm:
-		if c.items[c.selectedItem].Text == "FLEE" {
-			c.doneCommand = commands.CombatResult{Fled: true}
-		} else if c.items[c.selectedItem].Text == "SWAP GLITCH" {
-			c.showGlitches = true
+		if c.menu.selectedIndex >= 0 && c.menu.selectedIndex < len(c.menu.items) {
+			c.menu.items[c.menu.selectedIndex].Trigger()
 		}
 	case inputs.Direction:
 		if in.Y < 0 {
-			c.selectedItem--
-			if c.selectedItem < 0 {
-				c.selectedItem = 0
+			c.menu.selectedIndex--
+			if c.menu.selectedIndex < 0 {
+				c.menu.selectedIndex = 0
 			}
 		} else if in.Y > 0 {
-			c.selectedItem++
-			if c.selectedItem > len(c.items)-1 {
-				c.selectedItem = len(c.items) - 1
+			c.menu.selectedIndex++
+			if c.menu.selectedIndex > len(c.menu.items)-1 {
+				c.menu.selectedIndex = len(c.menu.items) - 1
 			}
 		}
 	case inputs.Click:
 		x := in.X - c.x
 		y := in.Y - c.y
-		for i, item := range c.items {
+		for i, item := range c.menu.items {
 			if x >= float64(item.Bounds.Min.X) && x <= float64(item.Bounds.Max.X) && y >= float64(item.Bounds.Min.Y) && y <= float64(item.Bounds.Max.Y) {
-				c.selectedItem = i
+				c.menu.selectedIndex = i
+				item.Trigger()
 			}
 		}
 		// TODO
@@ -142,10 +379,10 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 
 	// Draw right menu.
 	mx := cw + 10
-	my := ch - 100
+	my := ch - 150
 	mw := 190
-	mh := 100
-	{
+	mh := 150
+	if c.action == nil {
 		vector.DrawFilledRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), color.NRGBA{66, 66, 60, 220}, true)
 		vector.StrokeRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), 4, color.NRGBA{245, 245, 220, 255}, true)
 		mx += 6
@@ -156,12 +393,18 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.SetAlign(etxt.Top | etxt.Left)
 
 		res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
-		for i, item := range c.items {
+		for i, item := range c.menu.items {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(mx), float64(my))
-			c.image.DrawImage(item.Icon, op)
+			if item.Icon != nil {
+				c.image.DrawImage(item.Icon, op)
+				if item.SubIcon != nil {
+					op.GeoM.Translate(16, 0)
+					c.image.DrawImage(item.SubIcon, op)
+				}
+			}
 			s := item.Text
-			if i == c.selectedItem {
+			if i == c.menu.selectedIndex {
 				s = "   > " + s
 			} else {
 				s = "     " + s
@@ -169,7 +412,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			res.Text.Draw(c.image, s, int(mx), int(my))
 			item.Bounds = image.Rect(int(mx), int(my), int(mx)+res.Text.Measure(s).IntWidth(), int(my)+res.Text.Measure(s).IntHeight())
 			my += float64(res.DefFont.Size)
-			c.items[i] = item
+			c.menu.items[i] = item
 		}
 
 		res.Text.Utils().RestoreState()
