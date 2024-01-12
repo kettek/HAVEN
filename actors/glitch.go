@@ -1,7 +1,6 @@
 package actors
 
 import (
-	"fmt"
 	"image"
 	"math"
 	"math/rand"
@@ -223,7 +222,6 @@ func (g *Glitch) DrawPost(screen, post *ebiten.Image, r *game.Room, geom ebiten.
 		warp.image = screen.SubImage(image.Rect(int(x), int(y), int(x)+warp.w, int(y)+warp.h)).(*ebiten.Image)
 		gg2.Translate(warp.offsetX, warp.offsetY)
 		gg2.Concat(geom)
-		fmt.Println("grabbed from", int(warp.x), int(warp.y), int(warp.x+warp.w), int(warp.y+warp.h))
 		post.DrawImage(warp.image, &ebiten.DrawImageOptions{
 			GeoM: gg2,
 		})
