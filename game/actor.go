@@ -35,10 +35,13 @@ type CombatActor interface {
 	Name() string
 	CurrentStats() (int, int, int)
 	MaxStats() (int, int, int)
-	ApplyDamage(int, int, int)
+	ApplyDamage(int, int, int) (int, int, int)
+	ApplyBoost(int, int, int) (int, int, int)
 	Level() int
 	SetLevel(int)
 	Exp() int
 	AddExp(int)
 	ExpValue() int
+	RollBoost() (pen, fire, inte int)
+	RollAttack() (pen int)
 }

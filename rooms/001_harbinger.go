@@ -141,7 +141,7 @@ func init() {
 					s.(*actors.Glitch).SetName("slime")
 					s.(*actors.Glitch).SetLevel(rand.Intn(2))
 					s.(*actors.Glitch).Skews = true
-					s.(*actors.Glitch).SetStats(5, 5, 15)
+					s.(*actors.Glitch).SetStats(4, 4, 8)
 				},
 			},
 			"v": {
@@ -152,7 +152,7 @@ func init() {
 					s.(*actors.Glitch).SetLevel(rand.Intn(2))
 					s.(*actors.Glitch).Z = 1
 					s.(*actors.Glitch).Floats = true
-					s.(*actors.Glitch).SetStats(15, 5, 5)
+					s.(*actors.Glitch).SetStats(8, 4, 4)
 				},
 			},
 		},

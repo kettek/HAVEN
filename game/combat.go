@@ -30,10 +30,16 @@ type Combat struct {
 	isEnemyTurn   bool
 	menuMode      CombatMenuMode
 	action        CombatAction
+	report        []CombatLine
+}
+
+type CombatLine struct {
+	icon *ebiten.Image
+	text string
 }
 
 type CombatAction interface {
-	Done() bool
+	Done(c *Combat) bool
 	Update(c *Combat)
 	IsAttacker() bool
 }
@@ -44,12 +50,65 @@ type CombatActionAttack struct {
 	timer      int
 }
 
-func (c CombatActionAttack) Done() bool {
-	return c.timer >= 60
+func (c CombatActionAttack) Done(cmb *Combat) bool {
+	if c.timer >= 120 {
+		var defender CombatActor
+		if c.isAttacker {
+			defender = cmb.Defender
+		} else {
+			defender = cmb.Attacker
+		}
+		p, f, i := defender.CurrentStats()
+		if p <= 0 && c.stat == "PENETRATION" {
+			cmb.AddReport(fmt.Sprintf("%s's penetration is down!", defender.Name()), nil)
+		} else if f <= 0 && c.stat == "FIREWALL" {
+			cmb.AddReport(fmt.Sprintf("%s's firewall is down!", defender.Name()), nil)
+		} else if i <= 0 && c.stat == "INTEGRITY" {
+			cmb.AddReport(fmt.Sprintf("%s's integrity is down!", defender.Name()), nil)
+			cmb.AddReport(fmt.Sprintf("next attack will destroy %s", defender.Name()), nil)
+		}
+		return true
+	}
+	return false
 }
 
 func (c *CombatActionAttack) Update(cmb *Combat) {
 	c.timer++
+	if c.timer == 10 {
+		icon := res.LoadImage("icon-attack")
+		/*if c.stat == "INTEGRITY" {
+			icon = res.LoadImage("icon-integrity")
+		} else if c.stat == "FIREWALL" {
+			icon = res.LoadImage("icon-firewall")
+		} else if c.stat == "PENETRATION" {
+			icon = res.LoadImage("icon-penetration")
+		}*/
+		var attacker, defender CombatActor
+		if c.isAttacker {
+			attacker = cmb.Attacker
+			defender = cmb.Defender
+		} else {
+			attacker = cmb.Defender
+			defender = cmb.Attacker
+		}
+		v := attacker.RollAttack()
+		if v <= 0 {
+			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon)
+			return
+		}
+		if c.stat == "INTEGRITY" {
+			_, _, v = defender.ApplyDamage(0, 0, v)
+		} else if c.stat == "FIREWALL" {
+			_, v, _ = defender.ApplyDamage(0, v, 0)
+		} else if c.stat == "PENETRATION" {
+			v, _, _ = defender.ApplyDamage(v, 0, 0)
+		}
+		if v <= 0 {
+			cmb.AddReport(fmt.Sprintf("%s attacks %s, but is denied!", attacker.Name(), c.stat), icon)
+			return
+		}
+		cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), c.stat, v), icon)
+	}
 }
 
 func (c CombatActionAttack) IsAttacker() bool {
@@ -62,12 +121,44 @@ type CombatActionBoost struct {
 	timer      int
 }
 
-func (c CombatActionBoost) Done() bool {
-	return c.timer >= 60
+func (c CombatActionBoost) Done(cmb *Combat) bool {
+	if c.timer >= 120 {
+		return true
+	}
+	return false
 }
 
-func (c *CombatActionBoost) Update(cmd *Combat) {
+func (c *CombatActionBoost) Update(cmb *Combat) {
 	c.timer++
+	if c.timer == 10 {
+		icon := res.LoadImage("icon-boost")
+		/*if c.stat == "INTEGRITY" {
+			icon = res.LoadImage("icon-integrity")
+		} else if c.stat == "FIREWALL" {
+			icon = res.LoadImage("icon-firewall")
+		} else if c.stat == "PENETRATION" {
+			icon = res.LoadImage("icon-penetration")
+		}*/
+
+		var attacker, defender CombatActor
+		if c.isAttacker {
+			attacker = cmb.Attacker
+			defender = cmb.Defender
+		} else {
+			attacker = cmb.Defender
+			defender = cmb.Attacker
+		}
+		p, f, i := attacker.RollBoost()
+		var v int
+		if c.stat == "INTEGRITY" {
+			_, _, v = defender.ApplyBoost(0, 0, i)
+		} else if c.stat == "FIREWALL" {
+			_, v, _ = defender.ApplyBoost(0, f, 0)
+		} else if c.stat == "PENETRATION" {
+			v, _, _ = defender.ApplyBoost(p, 0, 0)
+		}
+		cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon)
+	}
 }
 
 func (c CombatActionBoost) IsAttacker() bool {
@@ -80,12 +171,19 @@ type CombatActionFlee struct {
 	timer      int
 }
 
-func (c CombatActionFlee) Done() bool {
-	return c.timer >= 30
+func (c CombatActionFlee) Done(cmb *Combat) bool {
+	return c.timer >= 120
 }
 
 func (c *CombatActionFlee) Update(cmb *Combat) {
 	c.timer++
+	if c.timer == 60 {
+		if c.canFlee {
+			cmb.AddReport(fmt.Sprintf("%s flees successfully!", cmb.Attacker.Name()), nil)
+		} else {
+			cmb.AddReport("escape is denied!", nil)
+		}
+	}
 }
 
 func (c CombatActionFlee) IsAttacker() bool {
@@ -139,6 +237,35 @@ func (c *Combat) SetAction(action CombatAction) {
 	c.action = action
 }
 
+func (c *Combat) AddReport(text string, icon *ebiten.Image) {
+	c.report = append(c.report, CombatLine{
+		icon: icon,
+		text: text,
+	})
+
+	res.Text.Utils().StoreState()
+	res.Text.SetSize(float64(res.DefFont.Size))
+	res.Text.SetFont(res.DefFont.Font)
+	res.Text.SetAlign(etxt.Top | etxt.Left)
+
+	// This is incorrect.
+	y := 4
+	cull := 0
+	for i := len(c.report) - 1; i >= 0; i-- {
+		line := c.report[i]
+		t := line.text
+		if line.icon != nil {
+			t = "  " + t
+		}
+		y += res.Text.MeasureWithWrap(t, 190-26).IntHeight()
+		if y > 240 {
+			cull++
+		}
+	}
+	c.report = c.report[cull:]
+	res.Text.Utils().RestoreState()
+}
+
 func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 	var c *Combat
 	c = &Combat{
@@ -157,7 +284,7 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 					},
 					{
 						Icon: res.LoadImage("icon-boost"),
-						Text: "INCREASE STAT",
+						Text: "BOOST STAT",
 						Trigger: func() {
 							c.SwapMenu(CombatMenuModeBoostStat)
 						},
@@ -188,6 +315,10 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 								a.canFlee = true
 							}
 							c.SetAction(a)
+							c.AddReport(
+								fmt.Sprintf("%s attempts to flee!", c.Attacker.Name()),
+								res.LoadImage("icon-escape"),
+							)
 						},
 					},
 				},
@@ -293,7 +424,7 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 	}
 	if c.action != nil {
 		c.action.Update(c)
-		if c.action.Done() {
+		if c.action.Done(c) {
 			// If the action is not the attacker (which is always the player), that means the turn is over and we can swap back to main menu.
 			if !c.action.IsAttacker() {
 				c.SwapMenu(CombatMenuModeMain)
@@ -302,10 +433,8 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 				// Otherwise, it means the enemy should do an action (if not fleeing).
 				if a, ok := c.action.(*CombatActionFlee); ok {
 					if a.canFlee {
-						fmt.Println("fled successfully")
 						c.doneCommand = commands.CombatResult{Fled: true}
 					} else {
-						fmt.Println("escape is denied!")
 						c.SetAction(c.GenerateEnemyAction())
 					}
 				} else {
@@ -376,6 +505,37 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 	//pt := c.image.Bounds().Size()
 
 	vector.StrokeRect(c.image, 0, 0, float32(cw), float32(ch), 4, color.NRGBA{245, 120, 245, 255}, true)
+
+	// Draw combat report.
+	{
+		mx := int(cw) + 10
+		my := 0
+		mw := 190
+		mh := 240
+		vector.DrawFilledRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), color.NRGBA{66, 66, 60, 220}, true)
+		vector.StrokeRect(c.image, float32(mx), float32(my), float32(mw), float32(mh), 4, color.NRGBA{245, 245, 220, 255}, true)
+		mx += 6
+		my += 4
+		res.Text.Utils().StoreState()
+		res.Text.SetSize(float64(res.DefFont.Size))
+		res.Text.SetFont(res.DefFont.Font)
+		res.Text.SetAlign(etxt.Top | etxt.Left)
+		res.Text.SetColor(color.NRGBA{0, 255, 44, 200})
+		y := my
+		for _, line := range c.report {
+			x := 0
+			t := line.text
+			if line.icon != nil {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Translate(float64(mx), float64(y))
+				c.image.DrawImage(line.icon, op)
+				t = "  " + t
+			}
+			res.Text.DrawWithWrap(c.image, t, mx+x, y, mw-26)
+			y += res.Text.MeasureWithWrap(t, mw-26).IntHeight()
+		}
+		res.Text.Utils().RestoreState()
+	}
 
 	// Draw right menu.
 	mx := cw + 10

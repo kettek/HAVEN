@@ -124,7 +124,7 @@ done:
 				attacker := cmd.Attacker.(CombatActor)
 				defender := cmd.Defender.(CombatActor)
 				//w.Combat = NewCombat(384, 288, attacker, defender)
-				w.Combat = NewCombat(500, 288, attacker, defender)
+				w.Combat = NewCombat(500, 388, attacker, defender)
 				res.Jukebox.Play("bad-health")
 			default:
 				fmt.Println("unhandled room->world command", cmd)
