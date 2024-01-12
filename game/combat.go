@@ -140,22 +140,20 @@ func (c *CombatActionBoost) Update(cmb *Combat) {
 			icon = res.LoadImage("icon-penetration")
 		}*/
 
-		var attacker, defender CombatActor
+		var attacker CombatActor
 		if c.isAttacker {
 			attacker = cmb.Attacker
-			defender = cmb.Defender
 		} else {
 			attacker = cmb.Defender
-			defender = cmb.Attacker
 		}
 		p, f, i := attacker.RollBoost()
 		var v int
 		if c.stat == "INTEGRITY" {
-			_, _, v = defender.ApplyBoost(0, 0, i)
+			_, _, v = attacker.ApplyBoost(0, 0, i)
 		} else if c.stat == "FIREWALL" {
-			_, v, _ = defender.ApplyBoost(0, f, 0)
+			_, v, _ = attacker.ApplyBoost(0, f, 0)
 		} else if c.stat == "PENETRATION" {
-			v, _, _ = defender.ApplyBoost(p, 0, 0)
+			v, _, _ = attacker.ApplyBoost(p, 0, 0)
 		}
 		cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon)
 	}
