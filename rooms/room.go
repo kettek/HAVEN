@@ -49,6 +49,9 @@ func (r *Room) ToGameRoom() *game.Room {
 				continue
 			}
 			g.Tiles[y][x].SpriteStack = game.NewSpriteStack(tileDef.Sprite)
+			if g.Tiles[y][x].SpriteStack != nil {
+				g.Tiles[y][x].SpriteStack.ExtraRotation = tileDef.Rotation
+			}
 			g.Tiles[y][x].BlocksMove = tileDef.BlocksMove
 			g.Tiles[y][x].Name = tileDef.Name
 		}
