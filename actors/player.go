@@ -19,6 +19,7 @@ type Player struct {
 	onInteract       InteractFunc
 	pendingCommand   commands.Command
 	ready            bool
+	ghosting         bool
 }
 
 func (p *Player) Ready() bool {
@@ -205,6 +206,14 @@ func (p *Player) Blocks() bool {
 }
 
 func (p *Player) SetBlocks(b bool) {
+}
+
+func (p *Player) Ghosting() bool {
+	return p.ghosting
+}
+
+func (p *Player) SetGhosting(b bool) {
+	p.ghosting = b
 }
 
 func init() {

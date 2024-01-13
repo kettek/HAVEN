@@ -20,5 +20,12 @@ func GetRoom(name string) *game.Room {
 	return room
 }
 
+func GetRoomNames() (names []string) {
+	for name := range rooms {
+		names = append(names, name)
+	}
+	return
+}
+
 var rooms = make(map[string]Room)
 var cachedRooms = make(map[string]*game.Room)

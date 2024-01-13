@@ -38,6 +38,7 @@ type Glitch struct {
 	Skews            bool
 	Floats           bool
 	Wanders          bool
+	ghosting         bool
 	warpEffects      []WarpEffect
 }
 
@@ -320,6 +321,14 @@ func (g *Glitch) Blocks() bool {
 }
 
 func (g *Glitch) SetBlocks(b bool) {
+}
+
+func (g *Glitch) Ghosting() bool {
+	return g.ghosting
+}
+
+func (g *Glitch) SetGhosting(b bool) {
+	g.ghosting = b
 }
 
 func init() {

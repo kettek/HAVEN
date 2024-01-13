@@ -107,6 +107,13 @@ func (p *Interactable) SetBlocks(b bool) {
 	p.blocks = b
 }
 
+func (p *Interactable) Ghosting() bool {
+	return false
+}
+
+func (p *Interactable) SetGhosting(b bool) {
+}
+
 func init() {
 	actors["interactable"] = func(x, y int, ctor CreateFunc, interact InteractFunc) game.Actor {
 		ss := game.NewSpriteStack("terminal")

@@ -287,6 +287,10 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 					cmd.Actor.Command(c)
 				}
 			} else if tile := r.GetTile(x, y); tile != nil {
+				if cmd.Actor.Ghosting() {
+					cmd.Actor.Command(c)
+					continue
+				}
 				if tile.SpriteStack == nil {
 					if w.PlayerActor == a {
 						r.TileMessage(Message{Text: "the void gazes at you", Duration: 1 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})

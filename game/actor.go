@@ -27,6 +27,8 @@ type Actor interface {
 	Interact(w *World, r *Room, other Actor) commands.Command
 	Blocks() bool
 	SetBlocks(bool)
+	Ghosting() bool
+	SetGhosting(bool)
 }
 
 type ActorCommand struct {

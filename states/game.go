@@ -1,6 +1,9 @@
 package states
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/kettek/ebihack23/game"
@@ -16,12 +19,51 @@ type Game struct {
 	hoveredTile      *game.Tile
 	hoveredActor     game.Actor
 	processChan      chan func() bool
+	Cheats           bool
+	cheatEngine      *CheatEngine
 }
 
 func NewGame() *Game {
-	return &Game{
+	g := &Game{
 		processChan: make(chan func() bool),
+		Cheats:      true,
+		cheatEngine: NewCheatEngine(),
 	}
+	g.cheatEngine.AddCheat("NOCLIP", func(g *Game) {
+		if g.world.PlayerActor != nil {
+			g.world.PlayerActor.SetGhosting(!g.world.PlayerActor.Ghosting())
+			fmt.Println("hey, you're not supposed to be a ghost!")
+		}
+	})
+	warpTo := func(r string) {
+		fmt.Printf("warping to \"%s\", you dirty cheater\n", r)
+		g.world.Room.RemoveActor(g.world.PlayerActor)
+		room := rooms.GetRoom(r)
+		room.AddActor(g.world.PlayerActor)
+		g.world.PlayerActor.SetPosition(1, 1, 0)
+		g.world.EnterRoom(room)
+	}
+
+	for _, m := range rooms.GetRoomNames() {
+		code := "WARP"
+		for _, c := range m {
+			if c >= '0' && c <= '9' {
+				code += "Digit" + string(c)
+			} else if c == '_' {
+				code += "Minus"
+				break
+			} else {
+				code += strings.ToUpper(string(c))
+				break
+			}
+		}
+		func(m string) {
+			g.cheatEngine.AddCheat(code, func(g *Game) {
+				warpTo(m)
+			})
+		}(m)
+	}
+	return g
 }
 
 func (g *Game) Camera() *game.Camera {
@@ -33,6 +75,9 @@ func (g *Game) Room() *game.Room {
 }
 
 func (g *Game) Update() error {
+	if g.Cheats {
+		g.cheatEngine.Update(g)
+	}
 	res.UpdateSounds()
 	res.Jukebox.Update()
 	// Get inputs.
@@ -163,4 +208,54 @@ func (g *Game) Leave() {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.world.Draw(screen)
+}
+
+type CheatEngine struct {
+	cheats        map[string]func(g *Game)
+	keys          []ebiten.Key
+	maxCheatLen   int
+	currentString string
+	lastType      int
+}
+
+func NewCheatEngine() *CheatEngine {
+	c := &CheatEngine{
+		cheats: make(map[string]func(g *Game)),
+		keys:   make([]ebiten.Key, 60),
+	}
+	return c
+}
+
+func (c *CheatEngine) AddCheat(str string, cb func(g *Game)) {
+	c.cheats[str] = cb
+	if len(str) > c.maxCheatLen {
+		c.maxCheatLen = len(str)
+	}
+}
+
+func (c *CheatEngine) Update(g *Game) {
+	c.lastType++
+	if c.lastType > 60 {
+		c.lastType = 0
+		c.currentString = ""
+	}
+	c.keys = c.keys[:0]
+	c.keys = inpututil.AppendJustReleasedKeys(c.keys)
+	for _, k := range c.keys {
+		c.currentString += k.String()
+		c.lastType = 0
+	}
+	var fnc func(g *Game)
+	for str, cb := range c.cheats {
+		if c.currentString == str {
+			fnc = cb
+			break
+		}
+	}
+	if fnc != nil {
+		fnc(g)
+		c.currentString = ""
+	} else if len(c.currentString) > c.maxCheatLen {
+		c.currentString = ""
+	}
 }
