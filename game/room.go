@@ -565,3 +565,7 @@ func (r *Room) RemoveActor(a Actor) {
 func (r *Room) AddActor(a Actor) {
 	r.Actors = append(r.Actors, a)
 }
+
+func (r *Room) PrependActor(a Actor) {
+	r.Actors = append([]Actor{a}, r.Actors...)
+}

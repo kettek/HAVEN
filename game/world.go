@@ -117,7 +117,7 @@ done:
 				}
 				if targetActor != nil {
 					w.Room.RemoveActor(targetActor)
-					room.AddActor(targetActor)
+					room.PrependActor(targetActor)
 					targetActor.SetPosition(x, y, 0)
 				}
 				w.EnterRoom(room)
