@@ -200,6 +200,13 @@ func (p *Player) Interact(w *game.World, r *game.Room, o game.Actor) commands.Co
 	return nil
 }
 
+func (p *Player) Blocks() bool {
+	return true
+}
+
+func (p *Player) SetBlocks(b bool) {
+}
+
 func init() {
 	actors["player"] = func(x, y int, ctor CreateFunc, interact InteractFunc) game.Actor {
 		ss := game.NewSpriteStack("player")

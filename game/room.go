@@ -230,16 +230,20 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 					collidedActors = append(collidedActors, a)
 					x1, y1, _ := actor.Position()
 					x2, y2, _ := a.Position()
-					a.Command(commands.Face{X: x1, Y: y1})
-					actor.Command(commands.Face{X: x2, Y: y2})
-				} else if actor != nil && w.PlayerActor == a {
-					var s string
-					if actor.Name() == "" {
-						s = "something"
-					} else {
-						s = fmt.Sprintf("<%s>", actor.Name())
+					if actor.Blocks() {
+						a.Command(commands.Face{X: x1, Y: y1})
+						actor.Command(commands.Face{X: x2, Y: y2})
 					}
-					r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+				} else if actor != nil && w.PlayerActor == a {
+					if actor.Blocks() {
+						var s string
+						if actor.Name() == "" {
+							s = "something"
+						} else {
+							s = fmt.Sprintf("<%s>", actor.Name())
+						}
+						r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+					}
 				}
 			}
 		}
@@ -270,7 +274,7 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 					results = append(results, cmd)
 					collidedActors = append(collidedActors, actor)
 					collidedActors = append(collidedActors, a)
-				} else if actor != nil && w.PlayerActor == a {
+				} else if actor != nil && w.PlayerActor == a && actor.Blocks() {
 					var s string
 					if actor.Name() == "" {
 						s = "something"
@@ -278,6 +282,9 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 						s = fmt.Sprintf("<%s>", actor.Name())
 					}
 					r.TileMessage(Message{Text: fmt.Sprintf("%s is there...\n", s), Duration: 3 * time.Second, Font: &res.SmallFont, X: ax, Y: ay})
+				}
+				if !actor.Blocks() {
+					cmd.Actor.Command(c)
 				}
 			} else if tile := r.GetTile(x, y); tile != nil {
 				if tile.SpriteStack == nil {

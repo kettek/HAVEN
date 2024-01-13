@@ -25,6 +25,8 @@ type Actor interface {
 	Name() string
 	SpriteStack() *SpriteStack
 	Interact(w *World, r *Room, other Actor) commands.Command
+	Blocks() bool
+	SetBlocks(bool)
 }
 
 type ActorCommand struct {

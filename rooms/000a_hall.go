@@ -3,6 +3,7 @@ package rooms
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
@@ -12,15 +13,16 @@ import (
 
 func init() {
 	doorLocked := true
+	glitchHunted := false
 	rooms["000a_hall"] = Room{
 		tiles: `// First line is ignored because lazy.
 		#   ##   ##   ##   ##   ##    ###v###             ### ###       
 		##tv###tv###tv###tv###tv##      #_#                 #d#         
 		# __   __   __   __   __         _                   _          
 		#  _    _    _    _    _       .......               _        # 
-		##........................   ....   ....  ......     ...      ##
-		#.............................        ..................   ,,,,,
-		##........................   ....   ....  ......     ...      ##
+		##........................   ...._ _....             ...      ##
+		#.............................    _   ..................   ,,,,,
+		##........................   ...._ _....             ...      ##
 		#  _    _    _    _    _       .......                        # 
 		#  __   __   __   __   __        _                   ,          
 		###^T###^T###^D###^T###^T#      #_#                 #,#         
@@ -47,13 +49,43 @@ func init() {
 		     
 		     
 		     
-		     
+		                            i              e
 		     
 		     
 		     
 		             DT
 		`,
 		entityMap: EntityDefs{
+			"i": {
+				Actor: "interactable",
+				OnCreate: func(s game.Actor) {
+					i := s.(*actors.Interactable)
+					i.SetName("info-1")
+					i.SetBlocks(false)
+					i.SpriteStack().SetSprite("blank")
+					i.SetTag("info-1")
+				},
+				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					go func() {
+						<-w.MessageR(game.Message{
+							Text:     "...these paths are broken...",
+							Duration: 4 * time.Second,
+						})
+					}()
+					return nil
+				},
+			},
+			"e": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					g := s.(*actors.Glitch)
+					g.SpriteStack().SetSprite("glitch-wanderer")
+					g.SetName("wounded wanderer")
+					g.SetTag("glitch")
+					g.Wanders = true
+					g.SetStats(2, 2, 4)
+				},
+			},
 			"E": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
@@ -165,6 +197,19 @@ func init() {
 		},
 		leave: func(w *game.World, r *game.Room) {
 			fmt.Println("left spawn")
+		},
+		turn: func(w *game.World, r *game.Room) {
+			if !glitchHunted {
+				p := r.GetActorByTag("player")
+				g := r.GetActorByTag("glitch")
+				px, py, _ := p.Position()
+				gx, gy, _ := g.Position()
+				dist := math.Sqrt(math.Pow(float64(px-gx), 2) + math.Pow(float64(py-gy), 2))
+				if dist < 6 {
+					g.(*actors.Glitch).Target = p
+					glitchHunted = true
+				}
+			}
 		},
 		update: func(w *game.World, r *game.Room) {
 		},

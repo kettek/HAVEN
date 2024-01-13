@@ -33,9 +33,11 @@ type Glitch struct {
 	pendingCommands  []commands.Command
 	warble           int
 	ready            bool
+	Target           game.Actor
 	thinkTicker      int
 	Skews            bool
 	Floats           bool
+	Wanders          bool
 	warpEffects      []WarpEffect
 }
 
@@ -141,20 +143,48 @@ func (g *Glitch) Update(room *game.Room) (cmd commands.Command) {
 	// Do a little wandering if our brain is empty.
 	if g.thinkTicker <= 0 {
 		g.thinkTicker = 2
-		if len(g.pendingCommands) == 0 {
-			x := rand.Intn(3) - 1
-			y := rand.Intn(3) - 1
-			if x != 0 && y != 0 {
+		if g.Target != nil {
+			tx, ty, _ := g.Target.Position()
+			xdir := 0
+			if tx < g.X {
+				xdir = -1
+			} else if tx > g.X {
+				xdir = 1
+			}
+			ydir := 0
+			if ty < g.Y {
+				ydir = -1
+			} else if ty > g.Y {
+				ydir = 1
+			}
+			if xdir != 0 && ydir != 0 {
 				if rand.Intn(2) == 0 {
-					x = 0
+					xdir = 0
 				} else {
-					y = 0
+					ydir = 0
 				}
 			}
 			g.pendingCommands = append(g.pendingCommands, commands.Step{
-				X: x,
-				Y: y,
+				X: xdir,
+				Y: ydir,
 			})
+
+		} else if g.Wanders {
+			if len(g.pendingCommands) == 0 {
+				x := rand.Intn(3) - 1
+				y := rand.Intn(3) - 1
+				if x != 0 && y != 0 {
+					if rand.Intn(2) == 0 {
+						x = 0
+					} else {
+						y = 0
+					}
+				}
+				g.pendingCommands = append(g.pendingCommands, commands.Step{
+					X: x,
+					Y: y,
+				})
+			}
 		}
 	}
 
@@ -258,6 +288,7 @@ func (g *Glitch) SetName(s string) {
 }
 
 func (g *Glitch) SetTag(s string) {
+	g.tag = s
 }
 
 func (g *Glitch) Tag() string {
@@ -284,6 +315,13 @@ func (g *Glitch) Interact(w *game.World, r *game.Room, o game.Actor) commands.Co
 	return nil
 }
 
+func (g *Glitch) Blocks() bool {
+	return true
+}
+
+func (g *Glitch) SetBlocks(b bool) {
+}
+
 func init() {
 	actors["glitch"] = func(x, y int, ctor CreateFunc, interact InteractFunc) game.Actor {
 		ss := game.NewSpriteStack("glitch")
@@ -297,6 +335,7 @@ func init() {
 			spriteStack: ss,
 			shadow:      shadow,
 			onInteract:  interact,
+			Wanders:     true,
 		}
 		if ctor != nil {
 			ctor(p)

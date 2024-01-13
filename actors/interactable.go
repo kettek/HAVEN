@@ -12,6 +12,7 @@ type Interactable struct {
 	name               string
 	tag                string
 	moving             bool
+	blocks             bool
 	targetX, targetY   int
 	pendingX, pendingY float64
 	spriteStack        *game.SpriteStack
@@ -98,6 +99,14 @@ func (p *Interactable) Interact(w *game.World, r *game.Room, o game.Actor) comma
 	return nil
 }
 
+func (p *Interactable) Blocks() bool {
+	return p.blocks
+}
+
+func (p *Interactable) SetBlocks(b bool) {
+	p.blocks = b
+}
+
 func init() {
 	actors["interactable"] = func(x, y int, ctor CreateFunc, interact InteractFunc) game.Actor {
 		ss := game.NewSpriteStack("terminal")
@@ -109,6 +118,7 @@ func init() {
 			name:        "terminal",
 			spriteStack: ss,
 			onInteract:  interact,
+			blocks:      true,
 		}
 		if ctor != nil {
 			ctor(t)
