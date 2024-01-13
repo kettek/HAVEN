@@ -39,9 +39,6 @@ func newSong(name string) *song {
 }
 
 func (j *jukebox) Update() {
-	if j.song == nil {
-		return
-	}
 	if j.fade > 0 {
 		j.fade--
 		if j.lastSong != nil {
@@ -52,9 +49,11 @@ func (j *jukebox) Update() {
 				j.lastSong = nil
 			}
 		}
-		j.song.player.SetVolume(float64(100-j.fade) / 100)
+		if j.song != nil {
+			j.song.player.SetVolume(float64(100-j.fade) / 100)
+		}
 	}
-	if !j.song.player.IsPlaying() {
+	if j.song != nil && !j.song.player.IsPlaying() {
 		if err := j.song.player.Rewind(); err != nil {
 			panic(err)
 		}
@@ -71,7 +70,11 @@ func (j *jukebox) Play(name string) {
 	}
 	j.fade = 100
 	j.lastSong = j.song
-	j.song = newSong(name)
+	if name != "" {
+		j.song = newSong(name)
+	} else {
+		j.song = nil
+	}
 }
 
 var SoundStreams = map[string]*vorbis.Stream{}
