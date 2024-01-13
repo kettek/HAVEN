@@ -15,6 +15,7 @@ type Combat struct {
 	maxFirewall    int
 	integrity      int
 	maxIntegrity   int
+	Glitches       []*Glitch
 }
 
 func (c *Combat) ApplyDamage(pen, fire, inte int) (rpen, rfire, rinte int) {
@@ -154,4 +155,8 @@ func (c *Combat) RollAttack() int {
 	p = int(math.Ceil(math.Max(float64(p)/4, float64(rand.Intn(p)))))
 
 	return p
+}
+
+func (c *Combat) HasGlitch() bool {
+	return len(c.Glitches) > 0
 }

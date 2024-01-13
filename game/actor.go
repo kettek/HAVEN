@@ -49,4 +49,5 @@ type CombatActor interface {
 	ExpValue() int
 	RollBoost() (pen, fire, inte int)
 	RollAttack() (pen int)
+	HasGlitch() bool
 }

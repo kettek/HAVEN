@@ -208,11 +208,12 @@ const (
 )
 
 type CombatMenuItem struct {
-	Icon    *ebiten.Image
-	SubIcon *ebiten.Image
-	Text    string
-	Bounds  image.Rectangle
-	Trigger func()
+	Icon     *ebiten.Image
+	SubIcon  *ebiten.Image
+	Text     string
+	Bounds   image.Rectangle
+	Disabled bool
+	Trigger  func()
 }
 
 func (c *Combat) SwapMenu(mode CombatMenuMode) {
@@ -293,6 +294,7 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 						Trigger: func() {
 							c.SwapMenu(CombatMenuModeUseGlitch)
 						},
+						Disabled: !attacker.HasGlitch(),
 					},
 					{
 						Icon: res.LoadImage("icon-swapGlitch"),
@@ -300,6 +302,15 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 						Trigger: func() {
 							c.SwapMenu(CombatMenuModeSwapGlitch)
 						},
+						Disabled: !attacker.HasGlitch(),
+					},
+					{
+						Icon: res.LoadImage("icon-captureGlitch"),
+						Text: "CAPTURE GLITCH",
+						Trigger: func() {
+							// TODO: sort of an attack.
+						},
+						Disabled: !attacker.HasGlitch(),
 					},
 					{
 						Icon: res.LoadImage("icon-escape"),
@@ -468,14 +479,26 @@ func (c *Combat) Input(in inputs.Input) {
 		}
 	case inputs.Direction:
 		if in.Y < 0 {
-			c.menu.selectedIndex--
-			if c.menu.selectedIndex < 0 {
-				c.menu.selectedIndex = 0
+			for {
+				c.menu.selectedIndex--
+				if c.menu.selectedIndex < 0 {
+					c.menu.selectedIndex = 0
+					break
+				}
+				if !c.menu.items[c.menu.selectedIndex].Disabled {
+					break
+				}
 			}
 		} else if in.Y > 0 {
-			c.menu.selectedIndex++
-			if c.menu.selectedIndex > len(c.menu.items)-1 {
-				c.menu.selectedIndex = len(c.menu.items) - 1
+			for {
+				c.menu.selectedIndex++
+				if c.menu.selectedIndex > len(c.menu.items)-1 {
+					c.menu.selectedIndex = len(c.menu.items) - 1
+					break
+				}
+				if !c.menu.items[c.menu.selectedIndex].Disabled {
+					break
+				}
 			}
 		}
 	case inputs.Click:
@@ -483,8 +506,10 @@ func (c *Combat) Input(in inputs.Input) {
 		y := in.Y - c.y
 		for i, item := range c.menu.items {
 			if x >= float64(item.Bounds.Min.X) && x <= float64(item.Bounds.Max.X) && y >= float64(item.Bounds.Min.Y) && y <= float64(item.Bounds.Max.Y) {
-				c.menu.selectedIndex = i
-				item.Trigger()
+				if !item.Disabled {
+					c.menu.selectedIndex = i
+					item.Trigger()
+				}
 			}
 		}
 		// TODO
@@ -567,6 +592,12 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 			} else {
 				s = "     " + s
 			}
+			if item.Disabled {
+				res.Text.SetColor(color.NRGBA{219, 86, 32, 100})
+			} else {
+				res.Text.SetColor(color.NRGBA{219, 86, 32, 255})
+			}
+
 			res.Text.Draw(c.image, s, int(mx), int(my))
 			item.Bounds = image.Rect(int(mx), int(my), int(mx)+res.Text.Measure(s).IntWidth(), int(my)+res.Text.Measure(s).IntHeight())
 			my += float64(res.DefFont.Size)
