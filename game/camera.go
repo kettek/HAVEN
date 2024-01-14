@@ -20,7 +20,8 @@ type Camera struct {
 }
 
 func NewCamera() *Camera {
-	w, h := ebiten.WindowSize()
+	//w, h := ebiten.WindowSize()
+	w, h := 640, 480
 	return &Camera{
 		W:    float64(w) / 3,
 		H:    float64(h) / 3,
@@ -62,7 +63,8 @@ func (c *Camera) CenterOn(x, y float64) {
 
 func (c *Camera) Update() error {
 	c.ticker++
-	w, h := ebiten.WindowSize()
+	//w, h := ebiten.WindowSize()
+	w, h := 640, 480
 	c.W = float64(w) / c.Zoom
 	c.H = float64(h) / c.Zoom
 

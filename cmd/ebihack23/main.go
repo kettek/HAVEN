@@ -15,7 +15,8 @@ func (e *ebihack) Draw(screen *ebiten.Image) {
 	states.CurrentState.Draw(screen)
 }
 func (e *ebihack) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return outsideWidth, outsideHeight
+	return 640, 480
+	//return outsideWidth, outsideHeight
 }
 
 func main() {
@@ -23,6 +24,7 @@ func main() {
 	g := &ebihack{}
 
 	states.NextState(states.NewGame())
+	//ebiten.SetScreenFilterEnabled(false)
 
 	if err := ebiten.RunGame(g); err != nil {
 		panic(err)
