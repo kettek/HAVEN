@@ -22,6 +22,7 @@ func init() {
 		# . #
 		#####
 		`,
+		name: "awakening",
 		song: "uncertain-haven",
 		tileDefs: TileDefs{
 			"#": {
@@ -140,9 +141,10 @@ func init() {
 			}
 			// Get our player.
 			for _, a := range r.Actors {
-				if a.Name() == "player" {
+				if a, ok := a.(*actors.Player); ok {
 					w.PlayerActor = a
-					a.(*actors.Player).SetStats(10, 10, 10)
+					a.SetStats(10, 10, 10)
+					a.SetName("SHOU")
 					break
 				}
 			}

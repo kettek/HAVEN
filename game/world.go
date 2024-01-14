@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/inputs"
 	"github.com/kettek/ebihack23/res"
+	"github.com/tinne26/etxt"
 )
 
 type World struct {
@@ -231,6 +233,65 @@ func (w *World) Draw(screen *ebiten.Image) {
 		w.Combat.y = float64(screen.Bounds().Dy()/2) - float64(w.Combat.image.Bounds().Dy()/2)
 		geom.Translate(w.Combat.x, w.Combat.y)
 		w.Combat.Draw(screen, geom)
+	} else if w.PlayerActor != nil {
+		p, f, i := w.PlayerActor.(CombatActor).CurrentStats()
+		mp, mf, mi := w.PlayerActor.(CombatActor).MaxStats()
+		exp := w.PlayerActor.(CombatActor).Exp()
+		lvl := w.PlayerActor.(CombatActor).Level()
+		// Draw player UI
+		x := 6
+		y := screen.Bounds().Dy() - 90
+
+		vector.DrawFilledRect(screen, float32(x), float32(y), 180, 84, color.NRGBA{19, 19, 97, 200}, false)
+		vector.StrokeRect(screen, float32(x), float32(y), 180, 84, 3, color.NRGBA{194, 193, 174, 255}, true)
+		x += 4
+		y += 3
+
+		res.Text.Utils().StoreState()
+		res.Text.SetSize(float64(res.DefFont.Size))
+		res.Text.SetFont(res.DefFont.Font)
+		res.Text.SetColor(color.NRGBA{255, 255, 255, 255})
+		res.Text.SetAlign(etxt.Right | etxt.Top)
+		res.Text.Draw(screen, w.PlayerActor.Name(), 183, y)
+		res.Text.SetAlign(etxt.Left | etxt.Top)
+		res.Text.SetColor(color.NRGBA{128, 128, 0, 255})
+		res.Text.Draw(screen, fmt.Sprintf("LVL %d", lvl), x, y)
+		y += 16
+		res.Text.SetColor(color.NRGBA{0, 128, 128, 255})
+		res.Text.Draw(screen, fmt.Sprintf("EXP %.3d/100", exp), x, y)
+		y += 16
+		res.Text.SetColor(color.NRGBA{50, 255, 50, 200})
+		res.Text.Draw(screen, fmt.Sprintf("INTEGRITY %d/%d", i, mi), x, y)
+		y += 16
+		res.Text.SetColor(color.NRGBA{255, 50, 50, 200})
+		res.Text.Draw(screen, fmt.Sprintf("FIREWALL %d/%d", f, mf), x, y)
+		y += 16
+		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
+		res.Text.Draw(screen, fmt.Sprintf("PENETRATION %d/%d", p, mp), x, y)
+
+		// Draw map UI
+		pw := float32(150)
+		ph := float32(33)
+		x = screen.Bounds().Dx() - int(pw) - 6
+		y = 6
+
+		fg := w.Room.Color
+		// bg is inverse of fg with wrap around.
+		bg := color.NRGBA{255 - fg.R, 255 - fg.G, 255 - fg.B, 255}
+
+		vector.DrawFilledRect(screen, float32(x), float32(y), pw, ph, bg, false)
+		vector.StrokeRect(screen, float32(x), float32(y), pw, ph, 3, fg, true)
+		y += 3
+
+		res.Text.SetColor(fg)
+		res.Text.SetAlign(etxt.Right | etxt.Top)
+		res.Text.Draw(screen, w.Room.Name, x+int(pw)-4, y)
+		y += 16
+		res.Text.SetFont(res.SmallFont.Font)
+		res.Text.SetSize(float64(res.SmallFont.Size))
+		res.Text.Draw(screen, w.Room.Song, x+int(pw)-4, y)
+
+		res.Text.Utils().RestoreState()
 	}
 
 	if len(w.Prompts) != 0 {

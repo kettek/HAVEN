@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"image/color"
 	"strings"
 
 	"github.com/kettek/ebihack23/actors"
@@ -17,6 +18,7 @@ type Room struct {
 	leave     func(w *game.World, r *game.Room)
 	update    func(w *game.World, r *game.Room)
 	turn      func(w *game.World, r *game.Room)
+	name      string
 	song      string
 }
 
@@ -38,6 +40,8 @@ func (r *Room) ToGameRoom() *game.Room {
 	g.OnLeave = r.leave
 	g.OnTurn = r.turn
 	g.Song = r.song
+	g.Color = color.NRGBA{0, 0, 0, 255}
+	g.Name = strings.ToUpper(r.name)
 
 	for y, line := range lines {
 		for x, char := range line {

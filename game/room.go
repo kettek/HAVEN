@@ -34,6 +34,7 @@ type Room struct {
 	RoutineChans    []func() bool
 	Song            string
 	turn            int
+	Name            string
 }
 
 func NewRoom(w, h int) *Room {

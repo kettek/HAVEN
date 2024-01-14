@@ -20,6 +20,7 @@ type Player struct {
 	pendingCommand   commands.Command
 	ready            bool
 	ghosting         bool
+	name             string
 }
 
 func (p *Player) Ready() bool {
@@ -169,10 +170,11 @@ func (p *Player) Hovered() bool {
 }
 
 func (p *Player) SetName(s string) {
+	p.name = s
 }
 
 func (p *Player) Name() string {
-	return "player"
+	return p.name
 }
 
 func (p *Player) SetTag(s string) {
@@ -223,6 +225,7 @@ func init() {
 		ss.YScale = 1
 		ss.LayerDistance = -1
 		p := &Player{
+			name:        "player",
 			X:           x,
 			Y:           y,
 			spriteStack: ss,

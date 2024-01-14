@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"image/color"
 	"math/rand"
 
 	"github.com/kettek/ebihack23/actors"
@@ -10,6 +11,8 @@ import (
 
 func init() {
 	rooms["001_harbinger"] = Room{
+		name: "harbinger",
+		song: "infrequent-lament",
 		tiles: `
 		##### ########################
 		#  .....                     #
@@ -158,13 +161,13 @@ func init() {
 		},
 		enter: func(w *game.World, r *game.Room) {
 			<-w.FuncR(func() {
-				r.Darkness = 1.0
+				r.Darkness = 2
+				r.SetColor(color.NRGBA{15, 7, 26, 255})
 			})
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
 		update: func(w *game.World, r *game.Room) {
 		},
-		song: "infrequent-lament",
 	}
 }

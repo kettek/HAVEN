@@ -8,6 +8,8 @@ import (
 
 func init() {
 	rooms["001a_triplets"] = Room{
+		name: "the triplets",
+		song: "infrequent-lament",
 		tiles: `// First line is ignored because lazy.
     #######   
    ##     ##  
@@ -131,6 +133,5 @@ func init() {
 		},
 		update: func(w *game.World, r *game.Room) {
 		},
-		song: "infrequent-lament",
 	}
 }

@@ -161,8 +161,8 @@ func (c *Combat) Exp() int {
 func (c *Combat) AddExp(e int) int {
 	c.exp += e
 	lvl := 0
-	for c.exp >= c.level*100 {
-		c.exp -= c.level * 100
+	for c.exp >= 100 {
+		c.exp -= 100
 		c.level++
 		lvl++
 	}
@@ -201,14 +201,14 @@ func (c *Combat) RollBoost() (int, int, int) {
 	mf = roll(mf)
 	mi = roll(mi)
 
-	if mp > mp2/4 {
-		mp = mp2 / 4
+	if mp > mp2/3 {
+		mp = mp2 / 3
 	}
-	if mf > mf2/4 {
-		mf = mf2 / 4
+	if mf > mf2/3 {
+		mf = mf2 / 3
 	}
-	if mi > mi2/4 {
-		mi = mi2 / 4
+	if mi > mi2/3 {
+		mi = mi2 / 3
 	}
 
 	return mp, mf, mi
