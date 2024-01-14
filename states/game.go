@@ -47,6 +47,14 @@ func NewGame() *Game {
 			fmt.Println("give me that")
 		}
 	})
+	g.cheatEngine.AddCheat("STFU", func(g *Game) {
+		g.world.SkipMessages = !g.world.SkipMessages
+		if g.world.SkipMessages {
+			fmt.Println("silence is golden")
+		} else {
+			fmt.Println("talk to me, baby")
+		}
+	})
 	warpTo := func(r string) {
 		fmt.Printf("warping to \"%s\", you dirty cheater\n", r)
 		g.world.Room.RemoveActor(g.world.PlayerActor)

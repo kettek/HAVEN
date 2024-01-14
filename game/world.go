@@ -28,6 +28,7 @@ type World struct {
 	Color            color.NRGBA
 	colorTicker      int
 	postProcessImage *ebiten.Image
+	SkipMessages     bool
 }
 
 func NewWorld(roomBuilder func(string) *Room) *World {
@@ -412,6 +413,9 @@ func (w *World) MessageR(msg Message) chan bool {
 	fnc := func() bool {
 		if first {
 			w.Messages = append(w.Messages, msg)
+			if w.SkipMessages {
+				msg.Duration = 0
+			}
 			first = false
 		}
 
