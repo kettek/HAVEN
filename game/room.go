@@ -405,16 +405,17 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		a.Draw(screen, r, geom, r.DrawMode)
 	}
 
-	lastX, lastY := -1, -1
 	res.Text.Utils().StoreState()
 	res.Text.SetAlign(etxt.Center)
-	for _, m := range r.TileMessages {
+	for i := len(r.TileMessages) - 1; i >= 0; i-- {
+		m := r.TileMessages[i]
 		g, _ := r.GetTilePositionGeoM(m.X, m.Y)
-		if m.X == lastX && m.Y == lastY {
-			g.Translate(0, -4)
-		}
-		lastX = m.X
-		lastY = m.Y
+		g.Translate(0, -3*float64(len(r.TileMessages)-i))
+
+		// Float it upwards.
+		delta := float64(time.Since(m.start)) / float64(m.Duration) * 2
+		g.Translate(0, -delta)
+
 		g.Concat(geom)
 		gx := g.Element(0, 2)
 		gy := g.Element(1, 2) - res.TileHeight*2 // Offset so the text doesn't appear right over the target
