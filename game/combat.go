@@ -34,9 +34,16 @@ type Combat struct {
 }
 
 type CombatLine struct {
-	icon *ebiten.Image
-	text string
+	icon  *ebiten.Image
+	text  string
+	color color.NRGBA
 }
+
+var attackColor = color.NRGBA{255, 50, 50, 200}
+var defenseColor = color.NRGBA{50, 255, 50, 200}
+var neutralColor = color.NRGBA{200, 200, 200, 200}
+var infoColor = color.NRGBA{255, 255, 50, 200}
+var importantColor = color.NRGBA{255, 50, 255, 200}
 
 type CombatAction interface {
 	Done(c *Combat) bool
@@ -60,12 +67,12 @@ func (c CombatActionAttack) Done(cmb *Combat) bool {
 		}
 		p, f, i := defender.CurrentStats()
 		if p <= 0 && c.stat == "PENETRATION" {
-			cmb.AddReport(fmt.Sprintf("%s's penetration is down!", defender.Name()), nil)
+			cmb.AddReport(fmt.Sprintf("%s's penetration is down!", defender.Name()), nil, neutralColor)
 		} else if f <= 0 && c.stat == "FIREWALL" {
-			cmb.AddReport(fmt.Sprintf("%s's firewall is down!", defender.Name()), nil)
+			cmb.AddReport(fmt.Sprintf("%s's firewall is down!", defender.Name()), nil, neutralColor)
 		} else if i <= 0 && c.stat == "INTEGRITY" {
-			cmb.AddReport(fmt.Sprintf("%s's integrity is down!", defender.Name()), nil)
-			cmb.AddReport(fmt.Sprintf("next attack will destroy %s", defender.Name()), nil)
+			cmb.AddReport(fmt.Sprintf("%s's integrity is down!", defender.Name()), nil, neutralColor)
+			cmb.AddReport(fmt.Sprintf("next attack will destroy %s", defender.Name()), res.LoadImage("icon-exclamation"), importantColor)
 		}
 		return true
 	}
@@ -93,7 +100,7 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		}
 		v := attacker.RollAttack()
 		if v <= 0 {
-			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon)
+			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon, infoColor)
 			return
 		}
 		if c.stat == "INTEGRITY" {
@@ -104,10 +111,10 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 			v, _, _ = defender.ApplyDamage(v, 0, 0)
 		}
 		if v <= 0 {
-			cmb.AddReport(fmt.Sprintf("%s attacks %s, but is denied!", attacker.Name(), c.stat), icon)
+			cmb.AddReport(fmt.Sprintf("%s attacks %s, but is denied!", attacker.Name(), c.stat), icon, infoColor)
 			return
 		}
-		cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), c.stat, v), icon)
+		cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), c.stat, v), icon, attackColor)
 	}
 }
 
@@ -155,7 +162,7 @@ func (c *CombatActionBoost) Update(cmb *Combat) {
 		} else if c.stat == "PENETRATION" {
 			v, _, _ = attacker.ApplyBoost(p, 0, 0)
 		}
-		cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon)
+		cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon, defenseColor)
 	}
 }
 
@@ -177,9 +184,9 @@ func (c *CombatActionFlee) Update(cmb *Combat) {
 	c.timer++
 	if c.timer == 60 {
 		if c.canFlee {
-			cmb.AddReport(fmt.Sprintf("%s flees successfully!", cmb.Attacker.Name()), nil)
+			cmb.AddReport(fmt.Sprintf("%s flees successfully!", cmb.Attacker.Name()), nil, neutralColor)
 		} else {
-			cmb.AddReport("escape is denied!", nil)
+			cmb.AddReport("escape is denied!", nil, neutralColor)
 		}
 	}
 }
@@ -236,10 +243,11 @@ func (c *Combat) SetAction(action CombatAction) {
 	c.action = action
 }
 
-func (c *Combat) AddReport(text string, icon *ebiten.Image) {
+func (c *Combat) AddReport(text string, icon *ebiten.Image, color color.NRGBA) {
 	c.report = append(c.report, CombatLine{
-		icon: icon,
-		text: text,
+		icon:  icon,
+		text:  text,
+		color: color,
 	})
 
 	res.Text.Utils().StoreState()
@@ -327,6 +335,7 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 							c.AddReport(
 								fmt.Sprintf("%s attempts to flee!", c.Attacker.Name()),
 								res.LoadImage("icon-escape"),
+								neutralColor,
 							)
 						},
 					},
@@ -543,9 +552,13 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.SetSize(float64(res.DefFont.Size))
 		res.Text.SetFont(res.DefFont.Font)
 		res.Text.SetAlign(etxt.Top | etxt.Left)
-		res.Text.SetColor(color.NRGBA{0, 255, 44, 200})
 		y := my
 		for _, line := range c.report {
+			if line.color.A == 0 {
+				res.Text.SetColor(color.NRGBA{200, 200, 200, 200})
+			} else {
+				res.Text.SetColor(line.color)
+			}
 			x := 0
 			t := line.text
 			if line.icon != nil {
