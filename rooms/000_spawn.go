@@ -144,7 +144,7 @@ func init() {
 				if a, ok := a.(*actors.Player); ok {
 					w.PlayerActor = a
 					a.SetStats(10, 10, 10)
-					a.SetName("SHOU")
+					a.SetName("SHOU-06")
 					break
 				}
 			}
