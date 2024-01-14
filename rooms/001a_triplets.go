@@ -1,6 +1,8 @@
 package rooms
 
 import (
+	"image/color"
+
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
@@ -8,8 +10,10 @@ import (
 
 func init() {
 	rooms["001a_triplets"] = Room{
-		name: "the triplets",
-		song: "infrequent-lament",
+		name:     "the triplets",
+		song:     "infrequent-lament",
+		darkness: 2,
+		color:    color.NRGBA{15, 7, 26, 255},
 		tiles: `// First line is ignored because lazy.
     #######   
    ##     ##  

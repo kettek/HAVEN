@@ -95,7 +95,7 @@ done:
 					w.Room.UpdateGlitchion()
 					if w.Room.Glitches == 0 {
 						w.Room.Darkness = 0
-						// TODO: Play holy sfx
+						res.PlaySound("cleansed")
 					}
 				} else if cmd.Loser == w.PlayerActor {
 					// Penalize the player in each stat by the level of the winner.
@@ -351,6 +351,11 @@ func (w *World) EnterRoom(room *Room) {
 		w.Room.OnEnter(w, w.Room)
 		<-w.FuncR(func() {
 			w.Room.Activate()
+			if w.Room.Glitches > 0 {
+				res.PlaySound("glitched")
+			} else {
+				res.PlaySound("cleansed")
+			}
 		})
 	}()
 }

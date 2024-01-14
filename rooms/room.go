@@ -20,6 +20,8 @@ type Room struct {
 	turn      func(w *game.World, r *game.Room)
 	name      string
 	song      string
+	darkness  float64
+	color     color.NRGBA
 }
 
 func (r *Room) ToGameRoom() *game.Room {
@@ -40,7 +42,12 @@ func (r *Room) ToGameRoom() *game.Room {
 	g.OnLeave = r.leave
 	g.OnTurn = r.turn
 	g.Song = r.song
-	g.Color = color.NRGBA{0, 0, 0, 255}
+	if r.color.A == 0 {
+		g.Color = color.NRGBA{0, 0, 0, 255}
+	} else {
+		g.Color = r.color
+	}
+	g.Darkness = r.darkness
 	g.Name = strings.ToUpper(r.name)
 
 	for y, line := range lines {

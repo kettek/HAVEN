@@ -16,8 +16,10 @@ func init() {
 	doorLocked := true
 	glitchHunted := false
 	rooms["000a_hall"] = Room{
-		name: "haven",
-		song: "damaged-haven",
+		name:     "haven",
+		song:     "damaged-haven",
+		darkness: 3,
+		color:    color.NRGBA{205, 205, 180, 255},
 		tiles: `// First line is ignored because lazy.
 		#   ##   ##   ##   ##   ##    ###v###             ### ###       
 		##tv###tv###tv###tv###tv##      #_#                 #d#         
@@ -202,7 +204,6 @@ func init() {
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
 			<-w.FuncR(func() {
-				r.SetColor(color.NRGBA{205, 205, 180, 255})
 			})
 		},
 		leave: func(w *game.World, r *game.Room) {

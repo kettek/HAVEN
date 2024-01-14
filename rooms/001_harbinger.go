@@ -11,8 +11,10 @@ import (
 
 func init() {
 	rooms["001_harbinger"] = Room{
-		name: "harbinger",
-		song: "infrequent-lament",
+		name:     "harbinger",
+		song:     "infrequent-lament",
+		darkness: 2,
+		color:    color.NRGBA{15, 7, 26, 255},
 		tiles: `
 		##### ########################
 		#  .....                     #
@@ -160,10 +162,6 @@ func init() {
 			},
 		},
 		enter: func(w *game.World, r *game.Room) {
-			<-w.FuncR(func() {
-				r.Darkness = 2
-				r.SetColor(color.NRGBA{15, 7, 26, 255})
-			})
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
