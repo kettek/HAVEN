@@ -15,6 +15,7 @@ func init() {
 	doorLocked := true
 	glitchHunted := false
 	rooms["000a_hall"] = Room{
+		song: "damaged-haven",
 		tiles: `// First line is ignored because lazy.
 		#   ##   ##   ##   ##   ##    ###v###             ### ###       
 		##tv###tv###tv###tv###tv##      #_#                 #d#         

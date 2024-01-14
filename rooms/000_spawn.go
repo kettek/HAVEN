@@ -22,6 +22,7 @@ func init() {
 		# . #
 		#####
 		`,
+		song: "uncertain-haven",
 		tileDefs: TileDefs{
 			"#": {
 				Name:       "wall of haven",
