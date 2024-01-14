@@ -15,6 +15,7 @@ import (
 func init() {
 	doorLocked := true
 	glitchHunted := false
+	first := true
 	rooms["000a_hall"] = Room{
 		name:     "haven",
 		song:     "damaged-haven",
@@ -25,9 +26,9 @@ func init() {
 		##tv###tv###tv###tv###tv##      #_#                 #d#         
 		# __   __   __   __   __         _                   _          
 		#  _    _    _    _    _       .......               _        # 
-		##........................   ....c c....             ...      ##
-		#.............................    c   ..................   ,,,,,
-		##........................   ....c c....             ...      ##
+		##......   ...............   ....c c....             ...      ##
+		#......   ....................    c   ..................   ,,,,,
+		##..... ..................   ....c c....             ...      ##
 		#  _    _    _    _    _       .......                        # 
 		#  __   __   __   __   __        _                   ,          
 		###^T###^T###^D###^T###^T#      #_#                 #,#         
@@ -203,11 +204,15 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
+			if !first {
+				return
+			}
+			first = false
 			<-w.MessageR(game.Message{
-				Duration:   4 * time.Second,
+				Duration:   5 * time.Second,
 				Color:      color.NRGBA{0, 0, 0, 255},
 				Background: color.NRGBA{255, 255, 255, 255},
-				Text:       "<THINK>\nfading darkness is invalid",
+				Text:       "<THINK>\nHAVEN is damaged and darkened",
 			})
 			<-w.MessageR(game.Message{
 				Duration:   4 * time.Second,
@@ -216,7 +221,7 @@ func init() {
 				Text:       "<SENSE>\ncorruption",
 			})
 			<-w.MessageR(game.Message{
-				Duration:   4 * time.Second,
+				Duration:   3 * time.Second,
 				Color:      color.NRGBA{0, 0, 0, 255},
 				Background: color.NRGBA{255, 255, 255, 255},
 				Text:       "<MUST>\ncleanse",
