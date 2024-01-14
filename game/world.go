@@ -227,7 +227,7 @@ func (w *World) Draw(screen *ebiten.Image) {
 	res.Text.Utils().StoreState()
 	if len(w.Messages) > 0 {
 		m := w.Messages[0]
-		mh := float32(screen.Bounds().Dy() / 4)
+		mh := float32(screen.Bounds().Dy()/4) * float32(m.H)
 		my := float32(screen.Bounds().Dy())/3.5 - mh/2
 		res.Text.SetColor(m.Color)
 		if m.Background.A != 0 {
@@ -406,9 +406,11 @@ func (w *World) MessageR(msg Message) chan bool {
 		if delta < 200*time.Millisecond {
 			w.Messages[0].Color.A = uint8(float64(delta) / float64(200*time.Millisecond) * 200)
 			w.Messages[0].Background.A = uint8(float64(delta) / float64(200*time.Millisecond) * 200)
+			w.Messages[0].H = float64(delta) / float64(200*time.Millisecond)
 		} else if delta > msg.Duration-200*time.Millisecond {
 			w.Messages[0].Color.A = uint8(float64(msg.Duration-delta) / float64(200*time.Millisecond) * 200)
 			w.Messages[0].Background.A = uint8(float64(msg.Duration-delta) / float64(200*time.Millisecond) * 200)
+			w.Messages[0].H = float64(msg.Duration-delta) / float64(200*time.Millisecond)
 		}
 
 		if time.Since(msg.start) >= msg.Duration {

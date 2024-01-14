@@ -14,6 +14,7 @@ type Message struct {
 	Background color.NRGBA
 	X          int
 	Y          int
+	H          float64
 	Font       *res.Font
 	start      time.Time
 	id         int
