@@ -143,13 +143,13 @@ func (c *Combat) RollBoost() (int, int, int) {
 	f /= 5
 	i /= 5
 	if p == 0 {
-		p = 1
+		p = 2
 	}
 	if f == 0 {
-		f = 1
+		f = 2
 	}
 	if i == 0 {
-		i = 1
+		i = 2
 	}
 	return rand.Intn(p), rand.Intn(f), rand.Intn(i)
 }
