@@ -13,6 +13,7 @@ import (
 type Player struct {
 	Combat
 	X, Y             int
+	prevX, prevY     int
 	movingTicker     int
 	targetX, targetY int
 	spriteStack      *game.SpriteStack
@@ -84,6 +85,8 @@ func (p *Player) Update(room *game.Room) (cmd commands.Command) {
 	if p.movingTicker > 0 {
 		p.movingTicker--
 		if p.movingTicker == 0 {
+			p.prevX = p.X
+			p.prevY = p.Y
 			p.X = p.targetX
 			p.Y = p.targetY
 		}
@@ -144,6 +147,33 @@ func (p *Player) Draw(screen *ebiten.Image, r *game.Room, geom ebiten.GeoM, draw
 	g.Concat(geom)
 
 	p.spriteStack.Draw(screen, g, drawMode, ratio)
+
+	if p.currentGlitch != nil {
+		if p.movingTicker > 0 {
+			moveRatio := float64(p.movingTicker) / 10
+			g2, _ := r.GetTilePositionGeoM(p.prevX, p.prevY)
+			g1, _ := r.GetTilePositionGeoM(p.X, p.Y)
+			g.SetElement(0, 2, g1.Element(0, 2)*(1-moveRatio)+g2.Element(0, 2)*(moveRatio))
+			g.SetElement(1, 2, g1.Element(1, 2)*(1-moveRatio)+g2.Element(1, 2)*(moveRatio))
+		} else {
+			g, ratio = r.GetTilePositionGeoM(p.prevX, p.prevY)
+		}
+		g.Concat(geom)
+
+		x := g.Element(0, 2)
+		y := g.Element(1, 2)
+		g.Reset()
+		g.Translate(x, y)
+
+		r := math.Atan2(float64(p.Y-p.prevY), float64(p.X-p.prevX))
+		//g.Translate(math.Cos(r)*res.TileWidth*2, math.Sin(r)*res.TileHeight*2)
+
+		p.currentGlitch.SpriteStack().Rotation = r - math.Pi/2
+
+		p.currentGlitch.SpriteStack().LayerDistance = -1
+		p.currentGlitch.SpriteStack().YScale = 0.5
+		p.currentGlitch.SpriteStack().Draw(screen, g, drawMode, ratio)
+	}
 }
 func (p *Player) DrawPost(screen, post *ebiten.Image, r *game.Room, geom ebiten.GeoM, drawMode game.DrawMode) {
 }
