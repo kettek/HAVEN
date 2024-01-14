@@ -284,10 +284,10 @@ func (r *Room) HandlePendingCommands(w *World) (results []commands.Command) {
 		}
 		switch c := cmd.Cmd.(type) {
 		case commands.Step:
-			cmd.Actor.Command(commands.Face{X: c.X, Y: c.Y})
 			ax, ay, _ := cmd.Actor.Position()
 			x := ax + c.X
 			y := ay + c.Y
+			cmd.Actor.Command(commands.Face{X: x, Y: y})
 			// Check if our destination is blocked.
 			if actor := r.GetActor(x, y); actor != nil && actor != cmd.Actor {
 				if cmd := actor.Interact(w, r, cmd.Actor); cmd != nil {
