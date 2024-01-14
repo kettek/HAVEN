@@ -1,13 +1,9 @@
 package rooms
 
 import (
-	"image/color"
-	"time"
-
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
-	"github.com/kettek/ebihack23/res"
 )
 
 func init() {
@@ -76,19 +72,52 @@ func init() {
 			"1": {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
-					s.SpriteStack().SetSprite("minion-pen")
-					s.(*actors.Glitch).SetName("minion-pen")
-					s.(*actors.Glitch).Z = 1
-					s.(*actors.Glitch).Floats = true
-					s.(*actors.Glitch).SpriteStack().YScale = 1.0
-					s.(*actors.Glitch).SpriteStack().Shaded = true
+					g := s.(*actors.Glitch)
+					g.SpriteStack().SetSprite("minion-pen")
+					g.SetName("minion-pen")
+					g.Z = 1
+					g.Floats = true
+					g.Wanders = false
+					g.SpriteStack().YScale = 1.0
+					g.SpriteStack().Shaded = true
+					g.SetLevel(2)
+					g.SetStats(10, 5, 5)
+				},
+			},
+			"2": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					g := s.(*actors.Glitch)
+					g.SpriteStack().SetSprite("minion-wall")
+					g.SetName("minion-wall")
+					g.Z = 1
+					g.Floats = true
+					g.Wanders = false
+					g.SpriteStack().YScale = 1.0
+					g.SpriteStack().Shaded = true
+					g.SetLevel(2)
+					g.SetStats(5, 5, 10)
+				},
+			},
+			"3": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					g := s.(*actors.Glitch)
+					g.SpriteStack().SetSprite("minion-shel")
+					g.SetName("minion-shel")
+					g.Z = 1
+					g.Floats = true
+					g.Wanders = false
+					g.SpriteStack().YScale = 1.0
+					g.SpriteStack().Shaded = true
+					g.SetLevel(2)
+					g.SetStats(5, 10, 5)
 				},
 			},
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
-			res.Jukebox.Play("infrequent-lament")
-			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
+			/*makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
 				return game.Message{Text: s, Duration: d, Color: c, Font: &res.BigFont}
 			}
 			delayTimeR(1 * time.Second)
@@ -96,7 +125,7 @@ func init() {
 			<-w.MessageR(makeBigMsg("We are the triplets, three.", 3000*time.Millisecond, clr))
 			<-w.MessageR(makeBigMsg("It hurts to be...", 3000*time.Millisecond, clr))
 			<-w.MessageR(makeBigMsg("but not due to thee", 3000*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("but rather, GRE!", 3000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("but rather, GRE!", 3000*time.Millisecond, clr))*/
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
