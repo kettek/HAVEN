@@ -72,15 +72,23 @@ done:
 					if !cmd.Destroyed {
 						exp /= 2 // Half exp for capturing.
 						// TODO: Capture glitch.
+						w.PlayerActor.(CombatActor).AddGlitch(cmd.Loser.(GlitchActor))
+						w.Room.TileMessage(Message{
+							X:        px,
+							Y:        py,
+							Text:     fmt.Sprintf("caught %s", cmd.Loser.(GlitchActor).Name()),
+							Color:    color.NRGBA{255, 64, 255, 255},
+							Duration: 3 * time.Second,
+						})
 					}
 					// Give EXP
-					lvl := cmd.Winner.(CombatActor).AddExp(cmd.ExpGained)
+					lvl := cmd.Winner.(CombatActor).AddExp(exp)
 					w.Room.TileMessage(Message{
 						X:        px,
 						Y:        py,
-						Text:     fmt.Sprintf("+%d EXP", cmd.ExpGained),
+						Text:     fmt.Sprintf("+%d EXP", exp),
 						Color:    color.NRGBA{255, 255, 0, 255},
-						Duration: 2 * time.Second,
+						Duration: 3 * time.Second,
 					})
 					if lvl > 0 {
 						w.Room.TileMessage(Message{
@@ -88,7 +96,7 @@ done:
 							Y:        py,
 							Text:     fmt.Sprintf("+%d LVL(s)", lvl),
 							Color:    color.NRGBA{0, 255, 0, 255},
-							Duration: 2 * time.Second,
+							Duration: 3 * time.Second,
 						})
 					}
 					w.Room.RemoveActor(cmd.Loser.(Actor))
@@ -303,7 +311,12 @@ func (w *World) Draw(screen *ebiten.Image) {
 		res.Text.Draw(screen, w.Room.Song, x+int(pw)-4, y)
 		res.Text.SetAlign(etxt.Left | etxt.Top)
 		y += 12
-		if w.Room.Glitches <= 0 {
+		if w.Room.MaxGlitches == 0 {
+			fg.R /= 2
+			fg.G *= 2
+			res.Text.SetColor(fg)
+			res.Text.Draw(screen, "safe", x+4, y)
+		} else if w.Room.Glitches <= 0 {
 			fg.R /= 2
 			fg.G *= 2
 			res.Text.SetColor(fg)

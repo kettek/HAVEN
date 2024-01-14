@@ -2,6 +2,8 @@ package actors
 
 import (
 	"math/rand"
+
+	"github.com/kettek/ebihack23/game"
 )
 
 type Combat struct {
@@ -18,7 +20,9 @@ type Combat struct {
 	penaltyIntegrity   int
 	killed             bool
 	captured           bool
-	Glitches           []*Glitch
+	glitches           []game.GlitchActor
+	currentGlitch      game.GlitchActor
+	ability            game.Ability
 }
 
 func roll(count int) (result int) {
@@ -227,7 +231,35 @@ func (c *Combat) RollAttack() int {
 }
 
 func (c *Combat) HasGlitch() bool {
-	return len(c.Glitches) > 0
+	return len(c.glitches) > 0
+}
+
+func (c *Combat) Glitches() []game.GlitchActor {
+	return c.glitches
+}
+
+func (c *Combat) AddGlitch(g game.GlitchActor) {
+	c.glitches = append(c.glitches, g)
+}
+
+func (c *Combat) RemoveGlitch(g game.GlitchActor) {
+	for i, g2 := range c.glitches {
+		if g == g2 {
+			c.glitches = append(c.glitches[:i], c.glitches[i+1:]...)
+			if c.currentGlitch == g {
+				if len(c.glitches) > 0 {
+					c.currentGlitch = c.glitches[0]
+				} else {
+					c.currentGlitch = nil
+				}
+			}
+			break
+		}
+	}
+}
+
+func (c *Combat) CurrentGlitch() game.GlitchActor {
+	return c.currentGlitch
 }
 
 func (c *Combat) Penalize(pen, fire, inte int) {
@@ -256,4 +288,12 @@ func (c *Combat) Captured() bool {
 
 func (c *Combat) Capture() {
 	c.captured = true
+}
+
+func (c *Combat) Ability() game.Ability {
+	return c.ability
+}
+
+func (c *Combat) SetAbility(a game.Ability) {
+	c.ability = a
 }

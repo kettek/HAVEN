@@ -52,10 +52,27 @@ type CombatActor interface {
 	RollBoost() (pen, fire, inte int)
 	RollAttack() (pen int)
 	HasGlitch() bool
+	Glitches() []GlitchActor
+	CurrentGlitch() GlitchActor
+	AddGlitch(GlitchActor)
+	RemoveGlitch(GlitchActor)
 	Killed() bool
 	Kill()
 	Captured() bool
 	Capture()
 	Penalize(pen, fire, inte int)
 	ClearPenalties()
+}
+
+type GlitchActor interface {
+	SpriteStack() *SpriteStack
+	Name() string
+	Level() int
+	Exp() int
+	ReduceDamage(int, int, int) (int, int, int)
+	RollBoost() (pen, fire, inte int)
+	RollAttack() (pen int)
+	AddExp(int) int
+	Ability() Ability
+	SetAbility(Ability)
 }

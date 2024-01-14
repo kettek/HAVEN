@@ -413,7 +413,7 @@ func (r *Room) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		g.Translate(0, -3*float64(len(r.TileMessages)-i))
 
 		// Float it upwards.
-		delta := float64(time.Since(m.start)) / float64(m.Duration) * 2
+		delta := float64(time.Since(m.start)) / float64(m.Duration) * 3
 		g.Translate(0, -delta)
 
 		g.Concat(geom)

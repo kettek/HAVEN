@@ -71,7 +71,11 @@ func (c *CombatActionDone) Update(combat *Combat) {
 		if c.Result.Fled {
 			// ???
 		} else if c.isAttacker {
-			combat.AddReport(fmt.Sprintf("%s destroys %s!", combat.Attacker.Name(), combat.Defender.Name()), nil, attackColor)
+			if !c.Result.Fled && !c.Result.Destroyed {
+				// Yeah, yeah, capturing isn't handled here because I'm lazy.
+			} else {
+				combat.AddReport(fmt.Sprintf("%s destroys %s!", combat.Attacker.Name(), combat.Defender.Name()), nil, attackColor)
+			}
 		} else {
 			combat.AddReport(fmt.Sprintf("%s infects %s!", combat.Defender.Name(), combat.Attacker.Name()), nil, attackColor)
 		}
@@ -134,7 +138,11 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 			defender = cmb.Attacker
 		}
 		v := attacker.RollAttack()
-		if v <= 0 {
+		var bonus int
+		if glitch := attacker.CurrentGlitch(); glitch != nil {
+			bonus = glitch.RollAttack() / 4
+		}
+		if v+bonus <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon, infoColor)
 			return
 		}
@@ -154,20 +162,24 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 			return
 		}
 		if c.stat == "INTEGRITY" {
-			_, _, v = defender.ReduceDamage(-1, -1, v)
-			_, _, v = defender.ApplyDamage(-1, -1, v)
+			_, _, v = defender.ReduceDamage(-1, -1, v+bonus)
+			_, _, v = defender.ApplyDamage(-1, -1, v+bonus)
 		} else if c.stat == "FIREWALL" {
-			_, v, _ = defender.ReduceDamage(-1, v, -1)
-			_, v, _ = defender.ApplyDamage(-1, v, -1)
+			_, v, _ = defender.ReduceDamage(-1, v+bonus, -1)
+			_, v, _ = defender.ApplyDamage(-1, v+bonus, -1)
 		} else if c.stat == "PENETRATION" {
-			v, _, _ = defender.ReduceDamage(v, -1, -1)
-			v, _, _ = defender.ApplyDamage(v, -1, -1)
+			v, _, _ = defender.ReduceDamage(v+bonus, -1, -1)
+			v, _, _ = defender.ApplyDamage(v+bonus, -1, -1)
 		}
 		if v <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but is denied!", attacker.Name(), c.stat), icon, infoColor)
 			return
 		}
-		cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), c.stat, v), icon, attackColor)
+		if bonus > 0 {
+			cmb.AddReport(fmt.Sprintf("%s attacks %s for %d(%d+%d)!", attacker.Name(), c.stat, v, v-bonus, bonus), icon, attackColor)
+		} else {
+			cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), c.stat, v), icon, attackColor)
+		}
 	}
 }
 
@@ -247,6 +259,90 @@ func (c *CombatActionFlee) Update(cmb *Combat) {
 
 func (c CombatActionFlee) IsAttacker() bool {
 	return c.isAttacker
+}
+
+type CombatActionCapture struct {
+	isAttacker bool
+	timer      int
+	caught     bool
+}
+
+func (c CombatActionCapture) IsAttacker() bool {
+	return c.isAttacker
+}
+
+func (c CombatActionCapture) Done(cmb *Combat) (CombatAction, bool) {
+	if c.timer < 360 {
+		return nil, false
+
+	}
+	if c.caught {
+		return &CombatActionDone{
+			isAttacker: c.isAttacker,
+			Result: commands.CombatResult{
+				Winner:    cmb.Attacker,
+				Loser:     cmb.Defender,
+				ExpGained: cmb.Defender.ExpValue(),
+				Destroyed: false,
+				Fled:      false,
+			},
+		}, true
+	}
+	return nil, true
+}
+
+func (c *CombatActionCapture) Try(cmb *Combat) bool {
+	return rand.Float64() < cmb.CaptureChance()
+}
+
+func (cmb *Combat) CaptureChance() float64 {
+	ap, _, _ := cmb.Attacker.CurrentStats()
+	apm, _, _ := cmb.Attacker.MaxStats()
+	dp, df, di := cmb.Defender.CurrentStats()
+	dpm, dfm, dim := cmb.Defender.MaxStats()
+
+	defi := float64(di) / float64(dim)
+	defp := float64(dp) / float64(dpm)
+	defm := float64(df) / float64(dfm)
+	defv := (defp + defm + defi) / 3
+
+	atkv := float64(ap) / float64(apm)
+
+	resv := math.Min(100, math.Max(0, atkv-defv))
+
+	return resv
+}
+
+func (c *CombatActionCapture) Update(cmb *Combat) {
+	c.timer++
+	if c.timer == 1 {
+		cmb.AddReport(fmt.Sprintf("%s attempts to capture %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+	} else if c.timer == 60 {
+		cmb.AddReport("maybe...", nil, neutralColor)
+	} else if c.timer == 120 {
+		if c.Try(cmb) {
+			cmb.AddReport(fmt.Sprintf("%s captures %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			c.timer = 301
+			c.caught = true
+			return
+		}
+	} else if c.timer == 180 {
+		cmb.AddReport("maybe...!", nil, neutralColor)
+	} else if c.timer == 240 {
+		if c.Try(cmb) {
+			cmb.AddReport(fmt.Sprintf("%s captures %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			c.timer = 301
+			c.caught = true
+			return
+		}
+	} else if c.timer == 300 {
+		if !c.Try(cmb) {
+			cmb.AddReport(fmt.Sprintf("%s failed to capture %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+		} else {
+			cmb.AddReport(fmt.Sprintf("%s captures %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			c.caught = true
+		}
+	}
 }
 
 type CombatMenu struct {
@@ -371,8 +467,9 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 						Text: "CAPTURE GLITCH",
 						Trigger: func() {
 							// TODO: sort of an attack.
+							c.SetAction(&CombatActionCapture{isAttacker: true})
 						},
-						Disabled: !attacker.HasGlitch(),
+						//Disabled: !attacker.HasGlitch(),
 					},
 					{
 						Icon: res.LoadImage("icon-escape"),
@@ -744,6 +841,9 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		y += res.DefFont.Size
 		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
 		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
+		y += res.DefFont.Size
+		res.Text.SetColor(neutralColor)
+		res.Text.Draw(c.image, fmt.Sprintf("CAPTURE %d%%", int(c.CaptureChance()*100)), x, y)
 		res.Text.Utils().RestoreState()
 	}
 
