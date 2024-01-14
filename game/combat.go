@@ -31,6 +31,7 @@ type Combat struct {
 	menuMode      CombatMenuMode
 	action        CombatAction
 	report        []CombatLine
+	AutoCapture   bool
 }
 
 type CombatLine struct {
@@ -272,6 +273,19 @@ func (c CombatActionCapture) IsAttacker() bool {
 }
 
 func (c CombatActionCapture) Done(cmb *Combat) (CombatAction, bool) {
+	if cmb.AutoCapture {
+		return &CombatActionDone{
+			isAttacker: c.isAttacker,
+			Result: commands.CombatResult{
+				Winner:    cmb.Attacker,
+				Loser:     cmb.Defender,
+				ExpGained: cmb.Defender.ExpValue(),
+				Destroyed: false,
+				Fled:      false,
+			},
+		}, true
+	}
+
 	if c.timer < 360 {
 		return nil, false
 
@@ -316,7 +330,12 @@ func (cmb *Combat) CaptureChance() float64 {
 func (c *CombatActionCapture) Update(cmb *Combat) {
 	c.timer++
 	if c.timer == 1 {
-		cmb.AddReport(fmt.Sprintf("%s attempts to capture %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+		if len(cmb.Attacker.Glitches()) >= 9 {
+			cmb.AddReport(fmt.Sprintf("%s attempts to capture %s, but the quarantine is full!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			c.timer = 301
+		} else {
+			cmb.AddReport(fmt.Sprintf("%s attempts to capture %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+		}
 	} else if c.timer == 60 {
 		cmb.AddReport("maybe...", nil, neutralColor)
 	} else if c.timer == 120 {
@@ -365,6 +384,7 @@ const (
 )
 
 type CombatMenuItem struct {
+	Glitch   GlitchActor
 	Icon     *ebiten.Image
 	SubIcon  *ebiten.Image
 	Text     string
@@ -423,8 +443,26 @@ func (c *Combat) AddReport(text string, icon *ebiten.Image, color color.NRGBA) {
 	res.Text.Utils().RestoreState()
 }
 
+func (c *Combat) RefreshGlitchSwap() {
+	var glitchMenuItems []CombatMenuItem
+	for _, g := range c.Attacker.Glitches() {
+		func(g GlitchActor) {
+			glitchMenuItems = append(glitchMenuItems, CombatMenuItem{
+				Glitch: g,
+				Text:   fmt.Sprintf("%s (%d)", g.Name(), g.Level()),
+				Trigger: func() {
+					// TODO: Swap to glitch!
+				},
+			})
+		}(g)
+	}
+	c.menus.swap.items = glitchMenuItems
+	c.menus.swap.selectedIndex = 0
+}
+
 func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 	var c *Combat
+
 	c = &Combat{
 		Attacker: attacker,
 		Defender: defender,
@@ -562,6 +600,7 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 			},
 		},
 	}
+	c.RefreshGlitchSwap()
 	c.SwapMenu(CombatMenuModeMain)
 	c.Refresh()
 
@@ -747,8 +786,11 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.SetColor(color.NRGBA{219, 86, 32, 200})
 		for i, item := range c.menu.items {
 			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(mx), float64(my))
-			if item.Icon != nil {
+			if item.Glitch != nil {
+				op.GeoM.Translate(float64(mx)+6, float64(my))
+				item.Glitch.SpriteStack().DrawFlat(c.image, op.GeoM)
+			} else if item.Icon != nil {
+				op.GeoM.Translate(float64(mx), float64(my))
 				c.image.DrawImage(item.Icon, op)
 				if item.SubIcon != nil {
 					op.GeoM.Translate(16, 0)
