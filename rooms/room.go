@@ -78,6 +78,9 @@ func (r *Room) ToGameRoom() *game.Room {
 			if actor == nil {
 				continue
 			}
+			if _, ok := actor.(*actors.Glitch); ok {
+				g.MaxGlitches++
+			}
 			g.Actors = append(g.Actors, actor)
 		}
 	}

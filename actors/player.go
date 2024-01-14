@@ -218,6 +218,10 @@ func (p *Player) SetGhosting(b bool) {
 	p.ghosting = b
 }
 
+func (p *Player) Glitch() bool {
+	return false
+}
+
 func init() {
 	actors["player"] = func(x, y int, ctor CreateFunc, interact InteractFunc) game.Actor {
 		ss := game.NewSpriteStack("player")

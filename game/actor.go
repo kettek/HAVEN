@@ -29,6 +29,7 @@ type Actor interface {
 	SetBlocks(bool)
 	Ghosting() bool
 	SetGhosting(bool)
+	Glitch() bool
 }
 
 type ActorCommand struct {

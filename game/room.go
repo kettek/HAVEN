@@ -35,6 +35,8 @@ type Room struct {
 	Song            string
 	turn            int
 	Name            string
+	Glitches        int
+	MaxGlitches     int
 }
 
 func NewRoom(w, h int) *Room {
@@ -47,8 +49,6 @@ func NewRoom(w, h int) *Room {
 	for i := range r.Tiles {
 		r.Tiles[i] = make([]Tile, w)
 		for j := range r.Tiles[i] {
-			//r.Tiles[i][j].spriteStack = NewSpriteStack("floor")
-			//r.Tiles[i][j].glitchion = 10
 			//r.Tiles[i][j].ticker = rand.Intn(100)
 			r.Tiles[i][j].Ticker = j*h + j
 		}
@@ -59,6 +59,25 @@ func NewRoom(w, h int) *Room {
 
 func (r *Room) Activate() {
 	r.active = true
+}
+
+func (r *Room) UpdateGlitchion() {
+	count := 0
+	for _, a := range r.Actors {
+		if a.Glitch() {
+			count++
+		}
+	}
+	for i := range r.Tiles {
+		for j := range r.Tiles[i] {
+			if count == 0 {
+				r.Tiles[i][j].Glitchion = 0
+				continue
+			}
+			r.Tiles[i][j].Glitchion = float64(count) * 10 / float64(r.MaxGlitches)
+		}
+	}
+	r.Glitches = count
 }
 
 func (r *Room) Update(w *World) []commands.Command {

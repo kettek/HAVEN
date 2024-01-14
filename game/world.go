@@ -92,6 +92,11 @@ done:
 						})
 					}
 					w.Room.RemoveActor(cmd.Loser.(Actor))
+					w.Room.UpdateGlitchion()
+					if w.Room.Glitches == 0 {
+						w.Room.Darkness = 0
+						// TODO: Play holy sfx
+					}
 				} else if cmd.Loser == w.PlayerActor {
 					// Penalize the player in each stat by the level of the winner.
 					lvl := cmd.Winner.(CombatActor).Level()
@@ -271,7 +276,7 @@ func (w *World) Draw(screen *ebiten.Image) {
 
 		// Draw map UI
 		pw := float32(150)
-		ph := float32(33)
+		ph := float32(43)
 		x = screen.Bounds().Dx() - int(pw) - 6
 		y = 6
 
@@ -290,6 +295,19 @@ func (w *World) Draw(screen *ebiten.Image) {
 		res.Text.SetFont(res.SmallFont.Font)
 		res.Text.SetSize(float64(res.SmallFont.Size))
 		res.Text.Draw(screen, w.Room.Song, x+int(pw)-4, y)
+		res.Text.SetAlign(etxt.Left | etxt.Top)
+		y += 12
+		if w.Room.Glitches <= 0 {
+			fg.R /= 2
+			fg.G *= 2
+			res.Text.SetColor(fg)
+			res.Text.Draw(screen, "it is cleansed", x+4, y)
+		} else {
+			fg.R *= 2
+			fg.G /= 2
+			res.Text.SetColor(fg)
+			res.Text.Draw(screen, fmt.Sprintf("%d remain", w.Room.Glitches), x+4, y)
+		}
 
 		res.Text.Utils().RestoreState()
 	}
@@ -321,6 +339,7 @@ func (w *World) EnterRoom(room *Room) {
 			if w.Room.Song != "" {
 				res.Jukebox.Play(w.Room.Song)
 			}
+			w.Room.UpdateGlitchion()
 			w.colorTicker = 0
 			if w.PlayerActor != nil {
 				x, y, _ := w.PlayerActor.Position()
