@@ -154,11 +154,14 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 			return
 		}
 		if c.stat == "INTEGRITY" {
-			_, _, v = defender.ApplyDamage(0, 0, v)
+			_, _, v = defender.ReduceDamage(-1, -1, v)
+			_, _, v = defender.ApplyDamage(-1, -1, v)
 		} else if c.stat == "FIREWALL" {
-			_, v, _ = defender.ApplyDamage(0, v, 0)
+			_, v, _ = defender.ReduceDamage(-1, v, -1)
+			_, v, _ = defender.ApplyDamage(-1, v, -1)
 		} else if c.stat == "PENETRATION" {
-			v, _, _ = defender.ApplyDamage(v, 0, 0)
+			v, _, _ = defender.ReduceDamage(v, -1, -1)
+			v, _, _ = defender.ApplyDamage(v, -1, -1)
 		}
 		if v <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but is denied!", attacker.Name(), c.stat), icon, infoColor)
@@ -203,13 +206,17 @@ func (c *CombatActionBoost) Update(cmb *Combat) {
 		p, f, i := attacker.RollBoost()
 		var v int
 		if c.stat == "INTEGRITY" {
-			_, _, v = attacker.ApplyBoost(0, 0, i)
+			_, _, v = attacker.ApplyBoost(-1, -1, i)
 		} else if c.stat == "FIREWALL" {
-			_, v, _ = attacker.ApplyBoost(0, f, 0)
+			_, v, _ = attacker.ApplyBoost(-1, f, -1)
 		} else if c.stat == "PENETRATION" {
-			v, _, _ = attacker.ApplyBoost(p, 0, 0)
+			v, _, _ = attacker.ApplyBoost(p, -1, -1)
 		}
-		cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon, defenseColor)
+		if v <= 0 {
+			cmb.AddReport(fmt.Sprintf("%s fails to boost %s", attacker.Name(), c.stat), icon, infoColor)
+		} else {
+			cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon, defenseColor)
+		}
 	}
 }
 
@@ -687,7 +694,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		attacker.SpriteStack().DrawIso(c.image, geom)
 		attacker.SpriteStack().Rotation = r
 
-		//mp, mf, mi := c.Attacker.MaxStats()
+		mp, mf, mi := c.Attacker.MaxStats()
 		cp, cf, ci := c.Attacker.CurrentStats()
 		res.Text.Utils().StoreState()
 		res.Text.SetSize(float64(res.DefFont.Size))
@@ -695,13 +702,13 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		x := 100
 		y := c.image.Bounds().Dy() - 72
 		res.Text.SetColor(color.NRGBA{50, 255, 50, 200})
-		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d", ci), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
 		y += res.DefFont.Size
 		res.Text.SetColor(color.NRGBA{255, 50, 50, 200})
-		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d", cf), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d/%d", cf, mf), x, y)
 		y += res.DefFont.Size
 		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
-		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d", cp), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
 		res.Text.Utils().RestoreState()
 	}
 	{
@@ -720,7 +727,7 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		defender.SpriteStack().Rotation = r
 		defender.SpriteStack().LayerDistance = d
 
-		//mp, mf, mi := c.Defender.MaxStats()
+		mp, mf, mi := c.Defender.MaxStats()
 		cp, cf, ci := c.Defender.CurrentStats()
 		res.Text.Utils().StoreState()
 		res.Text.SetSize(float64(res.DefFont.Size))
@@ -730,13 +737,13 @@ func (c *Combat) Draw(screen *ebiten.Image, geom ebiten.GeoM) {
 		res.Text.Draw(c.image, fmt.Sprintf("LVL %d %s", c.Defender.Level(), defender.Name()), x, y)
 		y += res.DefFont.Size * 2
 		res.Text.SetColor(color.NRGBA{50, 255, 50, 200})
-		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d", ci), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("INTEGRITY   %d/%d", ci, mi), x, y)
 		y += res.DefFont.Size
 		res.Text.SetColor(color.NRGBA{255, 50, 50, 200})
-		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d", cf), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("FIREWALL    %d/%d", cf, mf), x, y)
 		y += res.DefFont.Size
 		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
-		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d", cp), x, y)
+		res.Text.Draw(c.image, fmt.Sprintf("PENETRATION %d/%d", cp, mp), x, y)
 		res.Text.Utils().RestoreState()
 	}
 

@@ -1,7 +1,6 @@
 package actors
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 )
@@ -23,86 +22,105 @@ type Combat struct {
 	Glitches           []*Glitch
 }
 
-func (c *Combat) ApplyDamage(pen, fire, inte int) (rpen, rfire, rinte int) {
+func (c *Combat) ReduceDamage(pen, fire, inte int) (rpen, rfire, rinte int) {
 	_, f, _ := c.CurrentStats()
-
-	fmt.Println("apply damage", pen, fire, inte)
 
 	if pen > 0 {
 		pen -= f
 		rpen = pen
-	}
-	if pen < 0 {
-		pen = 0
-		rpen = 0
+		if rpen < 0 {
+			rpen = 1
+		}
 	}
 	if fire > 0 {
 		fire -= f
 		rfire = fire
-	}
-	if fire < 0 {
-		fire = 0
-		rfire = 0
+		if rfire < 0 {
+			rfire = 1
+		}
 	}
 	if inte > 0 {
 		inte -= f
 		rinte = inte
-	}
-	if inte < 0 {
-		inte = 0
-		rinte = 0
+		if inte < 0 {
+			rinte = 1
+		}
 	}
 
-	fmt.Println("apply damage2", pen, fire, inte)
-
-	c.penetration -= pen
-	c.firewall -= fire
-	c.integrity -= inte
-
-	if c.penetration < 0 {
-		c.penetration = 0
-	}
-	if c.firewall < 0 {
-		c.firewall = 0
-	}
-	if c.integrity < 0 {
-		c.integrity = 0
-	}
 	return
 }
 
-func (c *Combat) ApplyBoost(pen, fire, inte int) (int, int, int) {
-	if pen != 0 && c.penetration > c.maxPenetration {
-		pen /= 2
+func (c *Combat) ApplyDamage(pen, fire, inte int) (rpen, rfire, rinte int) {
+	if pen >= 0 {
+		if c.penetration-pen < 0 {
+			pen = c.penetration
+		}
+		c.penetration -= pen
 	}
-	if fire != 0 && c.firewall > c.maxFirewall {
-		fire /= 2
+	if fire >= 0 {
+		if c.firewall-fire < 0 {
+			fire = c.firewall
+		}
+		c.firewall -= fire
 	}
-	if inte != 0 && c.integrity > c.maxIntegrity {
-		inte /= 2
+	if inte >= 0 {
+		if c.integrity-inte < 0 {
+			inte = c.integrity
+		}
+		c.integrity -= inte
 	}
 
-	c.penetration += pen
-	c.firewall += fire
-	c.integrity += inte
+	return pen, fire, inte
+}
+
+func (c *Combat) ApplyBoost(pen, fire, inte int) (int, int, int) {
+	if pen >= 0 {
+		if c.penetration > c.maxPenetration {
+			pen /= 2
+		}
+		if pen == 0 {
+			pen = 1
+		}
+		c.penetration += pen
+	}
+	if fire > 0 {
+		if c.firewall > c.maxFirewall {
+			fire /= 2
+		}
+		if fire == 0 {
+			fire = 1
+		}
+		c.firewall += fire
+	}
+	if inte > 0 {
+		if c.integrity > c.maxIntegrity {
+			inte /= 2
+		}
+		if inte == 0 {
+			inte = 1
+		}
+		c.integrity += inte
+	}
+
 	return pen, fire, inte
 }
 
 func (c *Combat) SetStats(pen, fire, inte int) {
-	c.penetration = pen
 	c.maxPenetration = pen
-	c.firewall = fire
 	c.maxFirewall = fire
-	c.integrity = inte
 	c.maxIntegrity = inte
+	c.RestoreStats()
+}
+
+func (c *Combat) RestoreStats() {
+	p, f, i := c.MaxStats()
+	c.penetration = p
+	c.firewall = f
+	c.integrity = i
 }
 
 func (c *Combat) CurrentStats() (int, int, int) {
 	p, f, i := c.penetration, c.firewall, c.integrity
-
-	p += c.level * c.maxPenetration / 10
-	f += c.level * c.maxFirewall / 10
-	i += c.level * c.maxIntegrity / 10
 
 	return p - c.penaltyPenetration, f - c.penaltyFirewall, i - c.penaltyIntegrity
 }
@@ -143,20 +161,26 @@ func (c *Combat) ExpValue() int {
 }
 
 func (c *Combat) RollBoost() (int, int, int) {
-	p, f, i := c.MaxStats()
-	p /= 5
-	f /= 5
-	i /= 5
-	if p <= 0 {
-		p = 2
+	mp, mf, mi := c.MaxStats()
+	p, f, i := c.CurrentStats()
+	mp /= p
+	mf /= f
+	mi /= i
+	if mp <= 1 {
+		mp = 2
 	}
-	if f <= 0 {
-		f = 2
+	if mf <= 1 {
+		mf = 2
 	}
-	if i <= 0 {
-		i = 2
+	if mi <= 1 {
+		mi = 2
 	}
-	return rand.Intn(p), rand.Intn(f), rand.Intn(i)
+
+	mp = rand.Intn(mp)
+	mf = rand.Intn(mf)
+	mi = rand.Intn(mi)
+
+	return mp, mf, mi
 }
 
 func (c *Combat) RollAttack() int {
