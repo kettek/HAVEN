@@ -38,7 +38,7 @@ type ActorCommand struct {
 
 type CombatActor interface {
 	Name() string
-	CurrentStats() (int, int, int)
+	CurrentStats() (pen int, fire int, inte int)
 	MaxStats() (int, int, int)
 	ApplyDamage(int, int, int) (int, int, int)
 	ApplyBoost(int, int, int) (int, int, int)
@@ -50,4 +50,10 @@ type CombatActor interface {
 	RollBoost() (pen, fire, inte int)
 	RollAttack() (pen int)
 	HasGlitch() bool
+	Killed() bool
+	Kill()
+	Captured() bool
+	Capture()
+	Penalize(pen, fire, inte int)
+	ClearPenalties()
 }

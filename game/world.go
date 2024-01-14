@@ -62,7 +62,46 @@ done:
 	if w.Combat != nil {
 		if c := w.Combat.Update(w, w.Room); c != nil {
 			if cmd, ok := c.(commands.CombatResult); ok {
-				fmt.Println("combat result", cmd.Winner, "won", cmd.Destroyed, cmd.ExpGained)
+				px, py, _ := cmd.Winner.(Actor).Position()
+				if cmd.Fled {
+					// ... nada
+				} else if cmd.Winner == w.PlayerActor {
+					exp := cmd.ExpGained
+					if !cmd.Destroyed {
+						exp /= 2 // Half exp for capturing.
+						// TODO: Capture glitch.
+					}
+					// Give EXP
+					cmd.Winner.(CombatActor).AddExp(cmd.ExpGained)
+					w.Room.TileMessage(Message{
+						X:        px,
+						Y:        py,
+						Text:     fmt.Sprintf("+%d EXP", cmd.ExpGained),
+						Color:    color.NRGBA{255, 255, 0, 255},
+						Duration: 2 * time.Second,
+					})
+					w.Room.RemoveActor(cmd.Loser.(Actor))
+				} else if cmd.Loser == w.PlayerActor {
+					// Penalize the player in each stat by the level of the winner.
+					lvl := cmd.Winner.(CombatActor).Level()
+					cmd.Loser.(CombatActor).Penalize(lvl, lvl, lvl)
+					w.Room.TileMessage(Message{
+						X:        px,
+						Y:        py,
+						Text:     "*bzzt*",
+						Color:    color.NRGBA{255, 0, 255, 150},
+						Duration: 2 * time.Second,
+					})
+					px, py, _ = cmd.Loser.(Actor).Position()
+					w.Room.TileMessage(Message{
+						X:        px,
+						Y:        py,
+						Text:     fmt.Sprintf("-%d STATS", lvl),
+						Color:    color.NRGBA{255, 0, 0, 255},
+						Duration: 2 * time.Second,
+					})
+					w.Room.RemoveActor(cmd.Winner.(Actor))
+				}
 				w.Combat = nil
 				res.Jukebox.Play(w.Room.Song)
 			} else if cmd, ok := c.(commands.Prompt); ok {

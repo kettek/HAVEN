@@ -46,19 +46,54 @@ var infoColor = color.NRGBA{255, 255, 50, 200}
 var importantColor = color.NRGBA{255, 50, 255, 200}
 
 type CombatAction interface {
-	Done(c *Combat) bool
+	Done(c *Combat) (CombatAction, bool)
 	Update(c *Combat)
 	IsAttacker() bool
+}
+
+type CombatActionDone struct {
+	Result     commands.CombatResult
+	isAttacker bool
+	timer      int
+}
+
+func (c CombatActionDone) Done(combat *Combat) (CombatAction, bool) {
+	if c.timer >= 120 {
+		combat.doneCommand = c.Result
+		return nil, true
+	}
+	return nil, false
+}
+
+func (c *CombatActionDone) Update(combat *Combat) {
+	c.timer++
+	if c.timer == 10 {
+		if c.Result.Fled {
+			// ???
+		} else if c.isAttacker {
+			combat.AddReport(fmt.Sprintf("%s destroys %s!", combat.Attacker.Name(), combat.Defender.Name()), nil, attackColor)
+		} else {
+			combat.AddReport(fmt.Sprintf("%s infects %s!", combat.Defender.Name(), combat.Attacker.Name()), nil, attackColor)
+		}
+	}
+}
+
+func (c CombatActionDone) IsAttacker() bool {
+	return c.isAttacker
 }
 
 type CombatActionAttack struct {
 	stat       string
 	isAttacker bool
 	timer      int
+	next       CombatAction
 }
 
-func (c CombatActionAttack) Done(cmb *Combat) bool {
+func (c CombatActionAttack) Done(cmb *Combat) (CombatAction, bool) {
 	if c.timer >= 120 {
+		if c.next != nil {
+			return c.next, true
+		}
 		var defender CombatActor
 		if c.isAttacker {
 			defender = cmb.Defender
@@ -74,9 +109,9 @@ func (c CombatActionAttack) Done(cmb *Combat) bool {
 			cmb.AddReport(fmt.Sprintf("%s's integrity is down!", defender.Name()), nil, neutralColor)
 			cmb.AddReport(fmt.Sprintf("next attack will destroy %s", defender.Name()), res.LoadImage("icon-exclamation"), importantColor)
 		}
-		return true
+		return nil, true
 	}
-	return false
+	return nil, false
 }
 
 func (c *CombatActionAttack) Update(cmb *Combat) {
@@ -101,6 +136,21 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		v := attacker.RollAttack()
 		if v <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon, infoColor)
+			return
+		}
+		_, _, inte := defender.CurrentStats()
+		if inte <= 0 {
+			defender.Kill()
+			c.next = &CombatActionDone{
+				isAttacker: c.isAttacker,
+				Result: commands.CombatResult{
+					Winner:    attacker,
+					Loser:     defender,
+					Destroyed: true,
+					ExpGained: defender.ExpValue(),
+				},
+			}
+			c.timer = 120
 			return
 		}
 		if c.stat == "INTEGRITY" {
@@ -128,11 +178,8 @@ type CombatActionBoost struct {
 	timer      int
 }
 
-func (c CombatActionBoost) Done(cmb *Combat) bool {
-	if c.timer >= 120 {
-		return true
-	}
-	return false
+func (c CombatActionBoost) Done(cmb *Combat) (CombatAction, bool) {
+	return nil, c.timer >= 120
 }
 
 func (c *CombatActionBoost) Update(cmb *Combat) {
@@ -176,8 +223,8 @@ type CombatActionFlee struct {
 	timer      int
 }
 
-func (c CombatActionFlee) Done(cmb *Combat) bool {
-	return c.timer >= 120
+func (c CombatActionFlee) Done(cmb *Combat) (CombatAction, bool) {
+	return nil, c.timer >= 120
 }
 
 func (c *CombatActionFlee) Update(cmb *Combat) {
@@ -442,21 +489,26 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 	}
 	if c.action != nil {
 		c.action.Update(c)
-		if c.action.Done(c) {
-			// If the action is not the attacker (which is always the player), that means the turn is over and we can swap back to main menu.
-			if !c.action.IsAttacker() {
-				c.SwapMenu(CombatMenuModeMain)
-				c.action = nil
+		next, done := c.action.Done(c)
+		if done {
+			if next != nil {
+				c.SetAction(next)
 			} else {
-				// Otherwise, it means the enemy should do an action (if not fleeing).
-				if a, ok := c.action.(*CombatActionFlee); ok {
-					if a.canFlee {
-						c.doneCommand = commands.CombatResult{Fled: true}
+				if c.action.IsAttacker() {
+					// Otherwise, it means the enemy should do an action (if not fleeing).
+					if a, ok := c.action.(*CombatActionFlee); ok {
+						if a.canFlee {
+							c.doneCommand = commands.CombatResult{Fled: true}
+						} else {
+							c.SetAction(c.GenerateEnemyAction())
+						}
 					} else {
 						c.SetAction(c.GenerateEnemyAction())
 					}
 				} else {
-					c.SetAction(c.GenerateEnemyAction())
+					// If the action is not the attacker (which is always the player), that means the turn is over and we can swap back to main menu.
+					c.SwapMenu(CombatMenuModeMain)
+					c.action = nil
 				}
 			}
 		}

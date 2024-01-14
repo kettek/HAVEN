@@ -7,15 +7,20 @@ import (
 )
 
 type Combat struct {
-	level          int
-	exp            int
-	penetration    int
-	maxPenetration int
-	firewall       int
-	maxFirewall    int
-	integrity      int
-	maxIntegrity   int
-	Glitches       []*Glitch
+	level              int
+	exp                int
+	penetration        int
+	maxPenetration     int
+	firewall           int
+	maxFirewall        int
+	integrity          int
+	maxIntegrity       int
+	penaltyPenetration int
+	penaltyFirewall    int
+	penaltyIntegrity   int
+	killed             bool
+	captured           bool
+	Glitches           []*Glitch
 }
 
 func (c *Combat) ApplyDamage(pen, fire, inte int) (rpen, rfire, rinte int) {
@@ -99,7 +104,7 @@ func (c *Combat) CurrentStats() (int, int, int) {
 	f += c.level * c.maxFirewall / 10
 	i += c.level * c.maxIntegrity / 10
 
-	return p, f, i
+	return p - c.penaltyPenetration, f - c.penaltyFirewall, i - c.penaltyIntegrity
 }
 
 func (c *Combat) MaxStats() (int, int, int) {
@@ -142,13 +147,13 @@ func (c *Combat) RollBoost() (int, int, int) {
 	p /= 5
 	f /= 5
 	i /= 5
-	if p == 0 {
+	if p <= 0 {
 		p = 2
 	}
-	if f == 0 {
+	if f <= 0 {
 		f = 2
 	}
-	if i == 0 {
+	if i <= 0 {
 		i = 2
 	}
 	return rand.Intn(p), rand.Intn(f), rand.Intn(i)
@@ -168,4 +173,32 @@ func (c *Combat) RollAttack() int {
 
 func (c *Combat) HasGlitch() bool {
 	return len(c.Glitches) > 0
+}
+
+func (c *Combat) Penalize(pen, fire, inte int) {
+	c.penaltyPenetration += pen
+	c.penaltyFirewall += fire
+	c.penaltyIntegrity += inte
+}
+
+func (c *Combat) ClearPenalties() {
+	c.penaltyPenetration = 0
+	c.penaltyFirewall = 0
+	c.penaltyIntegrity = 0
+}
+
+func (c *Combat) Killed() bool {
+	return c.killed
+}
+
+func (c *Combat) Kill() {
+	c.killed = true
+}
+
+func (c *Combat) Captured() bool {
+	return c.captured
+}
+
+func (c *Combat) Capture() {
+	c.captured = true
 }

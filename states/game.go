@@ -35,6 +35,12 @@ func NewGame() *Game {
 			fmt.Println("hey, you're not supposed to be a ghost!")
 		}
 	})
+	g.cheatEngine.AddCheat("WEAK", func(g *Game) {
+		if g.world.PlayerActor != nil {
+			g.world.PlayerActor.(game.CombatActor).Penalize(100, 100, 100)
+			fmt.Println("weak as puny gnat, you are")
+		}
+	})
 	warpTo := func(r string) {
 		fmt.Printf("warping to \"%s\", you dirty cheater\n", r)
 		g.world.Room.RemoveActor(g.world.PlayerActor)
