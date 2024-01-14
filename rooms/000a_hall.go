@@ -15,6 +15,7 @@ import (
 func init() {
 	doorLocked := true
 	glitchHunted := false
+	glitchDead := false
 	first := true
 	rooms["000a_hall"] = Room{
 		name:     "haven",
@@ -23,16 +24,16 @@ func init() {
 		color:    color.NRGBA{205, 205, 180, 255},
 		tiles: `// First line is ignored because lazy.
 		#   ##   ##   ##   ##   ##    ###v###             ### ###       
-		##tv###tv###tv###tv###tv##      #_#                 #d#         
+		##tv###tv###tv###tv###tv##      #_#       c         #d#     c   
 		# __   __   __   __   __         _                   _          
-		#  _    _    _    _    _       .......               _        # 
-		##......   ...............   ....c c....             ...      ##
-		#......   ....................    c   ..................   ,,,,,
-		##..... ..................   ....c c....             ...      ##
+		#  _    _    _    _    _       .......        c      _        # 
+		##......       .. ........   ....c c....             ...      ##
+		#......    ...................    c   ..................   ,,,,,
+		##..... ............. ....   ....c c....             ...      ##
 		#  _    _    _    _    _       .......                        # 
-		#  __   __   __   __   __        _                   ,          
+		#  __   __   __   __   __        _            c      ,    c     
 		###^T###^T###^D###^T###^T#      #_#                 #,#         
-		 #   ##   ##   ##   ##   #    ###^###             ###,###       
+		 #   ##   ##   ##   ##   #    ###^###    c        ###,###       
 		`,
 		tileDefs: TileDefs{
 			"#": {
@@ -224,7 +225,7 @@ func init() {
 				Duration:   3 * time.Second,
 				Color:      color.NRGBA{0, 0, 0, 255},
 				Background: color.NRGBA{255, 255, 255, 255},
-				Text:       "<MUST>\ncleanse",
+				Text:       "<ACT>\ncleanse",
 			})
 		},
 		leave: func(w *game.World, r *game.Room) {
@@ -240,6 +241,27 @@ func init() {
 				if dist < 6 {
 					g.(*actors.Glitch).Target = p
 					glitchHunted = true
+					go func() {
+						<-w.MessageR(game.Message{
+							Duration:   3 * time.Second,
+							Color:      color.NRGBA{0, 0, 0, 255},
+							Background: color.NRGBA{255, 255, 255, 255},
+							Text:       "<SEE>\ncorruption source, wounded",
+						})
+					}()
+				}
+
+			} else if !glitchDead {
+				if g := r.GetActorByTag("glitch"); g == nil {
+					go func() {
+						<-w.MessageR(game.Message{
+							Duration:   3 * time.Second,
+							Color:      color.NRGBA{0, 0, 0, 255},
+							Background: color.NRGBA{255, 255, 255, 255},
+							Text:       "<KNOW>\nthis place is cleansed",
+						})
+					}()
+					glitchDead = true
 				}
 			}
 		},

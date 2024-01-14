@@ -3,6 +3,7 @@ package rooms
 import (
 	"image/color"
 	"math/rand"
+	"time"
 
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
@@ -10,6 +11,7 @@ import (
 )
 
 func init() {
+	first := true
 	rooms["001_harbinger"] = Room{
 		name:     "harbinger",
 		song:     "infrequent-lament",
@@ -162,6 +164,16 @@ func init() {
 			},
 		},
 		enter: func(w *game.World, r *game.Room) {
+			if !first {
+				return
+			}
+			first = true
+			<-w.MessageR(game.Message{
+				Duration:   3 * time.Second,
+				Color:      color.NRGBA{0, 0, 0, 255},
+				Background: color.NRGBA{255, 255, 255, 255},
+				Text:       "<SENSE>\nhigh corruption variety",
+			})
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},
