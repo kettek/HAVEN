@@ -46,7 +46,7 @@ type CombatActor interface {
 	Level() int
 	SetLevel(int)
 	Exp() int
-	AddExp(int)
+	AddExp(int) int
 	ExpValue() int
 	RollBoost() (pen, fire, inte int)
 	RollAttack() (pen int)

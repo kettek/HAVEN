@@ -1,7 +1,6 @@
 package actors
 
 import (
-	"math"
 	"math/rand"
 )
 
@@ -22,8 +21,20 @@ type Combat struct {
 	Glitches           []*Glitch
 }
 
+func roll(count int) (result int) {
+	for i := 0; i < count; i++ {
+		result += rand.Intn(2) + 1
+	}
+	return
+}
+
 func (c *Combat) ReduceDamage(pen, fire, inte int) (rpen, rfire, rinte int) {
 	_, f, _ := c.CurrentStats()
+
+	if f <= 1 {
+		f = 2
+	}
+	f = roll(f)
 
 	if pen > 0 {
 		pen -= f
@@ -147,12 +158,15 @@ func (c *Combat) Exp() int {
 	return c.exp
 }
 
-func (c *Combat) AddExp(e int) {
+func (c *Combat) AddExp(e int) int {
 	c.exp += e
-	if c.exp >= c.level*100 {
+	lvl := 0
+	for c.exp >= c.level*100 {
 		c.exp -= c.level * 100
 		c.level++
+		lvl++
 	}
+	return lvl
 }
 
 func (c *Combat) ExpValue() int {
@@ -162,10 +176,17 @@ func (c *Combat) ExpValue() int {
 
 func (c *Combat) RollBoost() (int, int, int) {
 	mp, mf, mi := c.MaxStats()
+	mp2, mf2, mi2 := mp, mf, mi
 	p, f, i := c.CurrentStats()
-	mp /= p
-	mf /= f
-	mi /= i
+	if p > 0 {
+		mp /= p
+	}
+	if f > 0 {
+		mf /= f
+	}
+	if i > 0 {
+		mi /= i
+	}
 	if mp <= 1 {
 		mp = 2
 	}
@@ -176,9 +197,19 @@ func (c *Combat) RollBoost() (int, int, int) {
 		mi = 2
 	}
 
-	mp = rand.Intn(mp)
-	mf = rand.Intn(mf)
-	mi = rand.Intn(mi)
+	mp = roll(mp)
+	mf = roll(mf)
+	mi = roll(mi)
+
+	if mp > mp2/4 {
+		mp = mp2 / 4
+	}
+	if mf > mf2/4 {
+		mf = mf2 / 4
+	}
+	if mi > mi2/4 {
+		mi = mi2 / 4
+	}
 
 	return mp, mf, mi
 }
@@ -190,7 +221,7 @@ func (c *Combat) RollAttack() int {
 		p = 1
 	}
 
-	p = int(math.Ceil(math.Max(float64(p)/4, float64(rand.Intn(p)))))
+	p = roll(p)
 
 	return p
 }

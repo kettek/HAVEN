@@ -72,7 +72,7 @@ done:
 						// TODO: Capture glitch.
 					}
 					// Give EXP
-					cmd.Winner.(CombatActor).AddExp(cmd.ExpGained)
+					lvl := cmd.Winner.(CombatActor).AddExp(cmd.ExpGained)
 					w.Room.TileMessage(Message{
 						X:        px,
 						Y:        py,
@@ -80,6 +80,15 @@ done:
 						Color:    color.NRGBA{255, 255, 0, 255},
 						Duration: 2 * time.Second,
 					})
+					if lvl > 0 {
+						w.Room.TileMessage(Message{
+							X:        px,
+							Y:        py,
+							Text:     fmt.Sprintf("+%d LVL(s)", lvl),
+							Color:    color.NRGBA{0, 255, 0, 255},
+							Duration: 2 * time.Second,
+						})
+					}
 					w.Room.RemoveActor(cmd.Loser.(Actor))
 				} else if cmd.Loser == w.PlayerActor {
 					// Penalize the player in each stat by the level of the winner.
