@@ -52,6 +52,7 @@ type CombatActor interface {
 	RollBoost() (pen, fire, inte int)
 	RollAttack() (pen int)
 	HasGlitch() bool
+	SetGlitch(GlitchActor)
 	Glitches() []GlitchActor
 	CurrentGlitch() GlitchActor
 	AddGlitch(GlitchActor)

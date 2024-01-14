@@ -364,6 +364,29 @@ func (c *CombatActionCapture) Update(cmb *Combat) {
 	}
 }
 
+type CombatActionSwapGlitch struct {
+	isAttacker bool
+	timer      int
+	glitch     GlitchActor
+}
+
+func (c CombatActionSwapGlitch) Done(cmb *Combat) (CombatAction, bool) {
+	return nil, c.timer >= 120
+}
+
+func (c *CombatActionSwapGlitch) Update(cmb *Combat) {
+	c.timer++
+	if c.timer == 10 {
+		cmb.AddReport(fmt.Sprintf("%s swaps to %s!", cmb.Attacker.Name(), c.glitch.Name()), nil, neutralColor)
+	} else if c.timer == 60 {
+		cmb.Attacker.SetGlitch(c.glitch)
+	}
+}
+
+func (c CombatActionSwapGlitch) IsAttacker() bool {
+	return c.isAttacker
+}
+
 type CombatMenu struct {
 	items         []CombatMenuItem
 	selectedIndex int
@@ -448,14 +471,28 @@ func (c *Combat) RefreshGlitchSwap() {
 	for _, g := range c.Attacker.Glitches() {
 		func(g GlitchActor) {
 			glitchMenuItems = append(glitchMenuItems, CombatMenuItem{
-				Glitch: g,
-				Text:   fmt.Sprintf("%s (%d)", g.Name(), g.Level()),
+				Glitch:   g,
+				Disabled: c.Attacker.CurrentGlitch() == g,
+				Text:     fmt.Sprintf("%s (%d)", g.Name(), g.Level()),
 				Trigger: func() {
-					// TODO: Swap to glitch!
+					if c.Attacker.CurrentGlitch() == g {
+						return
+					}
+					c.SetAction(&CombatActionSwapGlitch{
+						isAttacker: true,
+						glitch:     g,
+					})
 				},
 			})
 		}(g)
 	}
+	glitchMenuItems = append(glitchMenuItems, CombatMenuItem{
+		Text: "CANCEL",
+		Trigger: func() {
+			c.SwapMenu(CombatMenuModeMain)
+		},
+	})
+
 	c.menus.swap.items = glitchMenuItems
 	c.menus.swap.selectedIndex = 0
 }
@@ -652,6 +689,8 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 					// If the action is not the attacker (which is always the player), that means the turn is over and we can swap back to main menu.
 					c.SwapMenu(CombatMenuModeMain)
 					c.action = nil
+					// ugh, this is stupid, but having some dumb issues
+					c.RefreshGlitchSwap()
 				}
 			}
 		}

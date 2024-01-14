@@ -238,8 +238,20 @@ func (c *Combat) Glitches() []game.GlitchActor {
 	return c.glitches
 }
 
+func (c *Combat) SetGlitch(g game.GlitchActor) {
+	for _, g2 := range c.glitches {
+		if g == g2 {
+			c.currentGlitch = g
+			return
+		}
+	}
+}
+
 func (c *Combat) AddGlitch(g game.GlitchActor) {
 	c.glitches = append(c.glitches, g)
+	if c.currentGlitch == nil {
+		c.currentGlitch = g
+	}
 }
 
 func (c *Combat) RemoveGlitch(g game.GlitchActor) {
