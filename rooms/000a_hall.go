@@ -203,7 +203,23 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
-			<-w.FuncR(func() {
+			<-w.MessageR(game.Message{
+				Duration:   4 * time.Second,
+				Color:      color.NRGBA{0, 0, 0, 255},
+				Background: color.NRGBA{255, 255, 255, 255},
+				Text:       "<THINK>\nfading darkness is invalid",
+			})
+			<-w.MessageR(game.Message{
+				Duration:   4 * time.Second,
+				Color:      color.NRGBA{0, 0, 0, 255},
+				Background: color.NRGBA{255, 255, 255, 255},
+				Text:       "<SENSE>\ncorruption",
+			})
+			<-w.MessageR(game.Message{
+				Duration:   4 * time.Second,
+				Color:      color.NRGBA{0, 0, 0, 255},
+				Background: color.NRGBA{255, 255, 255, 255},
+				Text:       "<MUST>\ncleanse",
 			})
 		},
 		leave: func(w *game.World, r *game.Room) {

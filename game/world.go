@@ -227,8 +227,14 @@ func (w *World) Draw(screen *ebiten.Image) {
 	res.Text.Utils().StoreState()
 	if len(w.Messages) > 0 {
 		m := w.Messages[0]
+		mh := float32(screen.Bounds().Dy() / 4)
+		my := float32(screen.Bounds().Dy())/3.5 - mh/2
 		res.Text.SetColor(m.Color)
-		res.Text.Draw(screen, m.Text, 16, 32)
+		if m.Background.A != 0 {
+			vector.DrawFilledRect(screen, 0, my, float32(screen.Bounds().Dx()), mh, m.Background, false)
+		}
+		res.Text.SetAlign(etxt.Center)
+		res.Text.DrawWithWrap(screen, m.Text, screen.Bounds().Dx()/2, int(my+mh/2), screen.Bounds().Dx()-32)
 	}
 	res.Text.Utils().RestoreState()
 
@@ -395,6 +401,16 @@ func (w *World) MessageR(msg Message) chan bool {
 			w.Messages = append(w.Messages, msg)
 			first = false
 		}
+
+		delta := time.Since(msg.start)
+		if delta < 200*time.Millisecond {
+			w.Messages[0].Color.A = uint8(float64(delta) / float64(200*time.Millisecond) * 200)
+			w.Messages[0].Background.A = uint8(float64(delta) / float64(200*time.Millisecond) * 200)
+		} else if delta > msg.Duration-200*time.Millisecond {
+			w.Messages[0].Color.A = uint8(float64(msg.Duration-delta) / float64(200*time.Millisecond) * 200)
+			w.Messages[0].Background.A = uint8(float64(msg.Duration-delta) / float64(200*time.Millisecond) * 200)
+		}
+
 		if time.Since(msg.start) >= msg.Duration {
 			w.Messages = w.Messages[1:]
 			done <- true

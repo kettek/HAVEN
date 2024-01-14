@@ -179,9 +179,7 @@ func init() {
 			<-w.FuncR(func() {
 				r.SetColor(color.NRGBA{205, 205, 180, 255})
 			})
-			go func() {
-				<-w.MessageR(makeBigMsg("<LMB> to investigate, <RMB> to act", 8000*time.Millisecond, clr))
-			}()
+			<-w.MessageR(makeBigMsg("ARROWS = move +Shift = investigate\n<RMB> = move, <LMB> = investigate", 8000*time.Millisecond, clr))
 			first = false
 		},
 		leave: func(w *game.World, r *game.Room) {

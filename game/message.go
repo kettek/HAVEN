@@ -8,14 +8,15 @@ import (
 )
 
 type Message struct {
-	Text     string
-	Duration time.Duration
-	Color    color.NRGBA
-	X        int
-	Y        int
-	Font     *res.Font
-	start    time.Time
-	id       int
+	Text       string
+	Duration   time.Duration
+	Color      color.NRGBA
+	Background color.NRGBA
+	X          int
+	Y          int
+	Font       *res.Font
+	start      time.Time
+	id         int
 }
 
 var messageID int
