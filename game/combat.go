@@ -498,7 +498,7 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 					// Otherwise, it means the enemy should do an action (if not fleeing).
 					if a, ok := c.action.(*CombatActionFlee); ok {
 						if a.canFlee {
-							c.doneCommand = commands.CombatResult{Fled: true}
+							c.doneCommand = commands.CombatResult{Fled: true, Winner: c.Attacker, Loser: c.Defender}
 						} else {
 							c.SetAction(c.GenerateEnemyAction())
 						}
