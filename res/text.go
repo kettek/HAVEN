@@ -63,6 +63,8 @@ func init() {
 		Size: 8,
 	}
 
+	Text.Fract().SetHorzQuantization(etxt.QtFull)
+
 	Text.SetFont(BigFont.Font)
 	Text.SetSize(float64(BigFont.Size))
 	Text.Utils().SetCache8MiB()
