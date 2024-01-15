@@ -231,9 +231,44 @@ func (w *World) Input(in inputs.Input) {
 							w.PlayerActor.(CombatActor).SetGlitch(glitches[gx])
 						}
 					}
+				} else if x >= glitchesUIAbsorbX && x <= glitchesUIAbsorbX+glitchesUIAbsorbWidth && y >= glitchesUIY && y <= glitchesUIY+glitchesUIHeight {
+					if w.PlayerActor != nil {
+						if glitch := w.PlayerActor.(CombatActor).CurrentGlitch(); glitch != nil {
+							w.AddPrompt([]string{"CANCEL", "OK"}, "Absorbing will remove this glitch. It will also also apply a boost to you using its stats.\nAbsorb?", func(i int, s string) bool {
+								if i == 0 {
+									return true
+								} else if i == 1 {
+									// Restore stats so the glitch gives a minimal boost. :)
+									//glitch.(CombatActor).RestoreStats() // actually, no, having an injured glitch could be a cool tactic -- bring something real low, capture it, then use it for a self-heal.
+									w.PlayerActor.(CombatActor).ApplyBoost(glitch.RollBoost())
+									w.PlayerActor.(CombatActor).RemoveGlitch(glitch)
+									return true
+								}
+								return true
+							}, false)
+						}
+					}
+				} else if x >= glitchesUIInfoX && x <= glitchesUIInfoX+glitchesUIInfoWidth && y >= glitchesUIY && y <= glitchesUIY+glitchesUIHeight {
+					if w.PlayerActor != nil {
+						glitch := w.PlayerActor.(CombatActor).CurrentGlitch()
+						if glitch != nil {
+							info := fmt.Sprintf("%s (LVL %d)\n\n", glitch.Name(), glitch.Level())
+							p, f, i := glitch.(CombatActor).CurrentStats()
+							mp, mf, mi := glitch.(CombatActor).MaxStats()
+							ability := "-"
+							abilityDesc := ""
+							info += fmt.Sprintf("INTEGRITY %d/%d\n", i, mi)
+							info += fmt.Sprintf("FIREWALL %d/%d\n", f, mf)
+							info += fmt.Sprintf("PENETRATION %d/%d\n", p, mp)
+							info += fmt.Sprintf("ABILITY: %s\n", ability)
+							info += fmt.Sprintf("%s\n", abilityDesc)
+							w.AddPrompt([]string{"OK"}, info, func(i int, s string) bool {
+								return true
+							}, false)
+						}
+					}
 				}
 			}
-
 		}
 	}
 }
@@ -338,7 +373,26 @@ func (w *World) Draw(screen *ebiten.Image) {
 				g.SpriteStack().DrawFlat(screen, op.GeoM)
 				g.SpriteStack().Highlight = false
 				op.GeoM.Translate(16, 0)
+				x += 16
 			}
+			y -= 3
+			x = glitchesUIX + glitchesUIWidth + paddingUI
+			// Draw an ABSORB button.
+			res.Text.SetAlign(etxt.Center)
+			glitchesUIAbsorbWidth = res.Text.Measure("ABSORB GLITCH").IntWidth() + paddingUI*2
+			glitchesUIAbsorbX = x
+			res.Text.SetColor(color.NRGBA{19, 19, 94, 200})
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(glitchesUIAbsorbWidth), glitchesUIHeight, color.NRGBA{194, 193, 174, 200}, false)
+			vector.StrokeRect(screen, float32(x), float32(y), float32(glitchesUIAbsorbWidth), glitchesUIHeight, 3, color.NRGBA{19, 19, 94, 255}, true)
+			res.Text.Draw(screen, "ABSORB GLITCH", x+glitchesUIAbsorbWidth/2, y+glitchesUIHeight/2+1)
+			// Draw an INFO button.
+			x += glitchesUIAbsorbWidth
+			x += paddingUI * 2
+			glitchesUIInfoX = x
+			glitchesUIInfoWidth = res.Text.Measure("GLITCH INFO").IntWidth() + paddingUI*2
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(glitchesUIInfoWidth), glitchesUIHeight, color.NRGBA{194, 193, 174, 200}, false)
+			vector.StrokeRect(screen, float32(x), float32(y), float32(glitchesUIInfoWidth), glitchesUIHeight, 3, color.NRGBA{19, 19, 94, 255}, true)
+			res.Text.Draw(screen, "GLITCH INFO", x+glitchesUIInfoWidth/2, y+glitchesUIHeight/2+1)
 		}
 
 		// Draw map UI
@@ -506,10 +560,18 @@ func (w *World) FuncR(fnc func()) chan bool {
 const playerUIHeight = 84
 const playerUIWidth = 180
 const playerUIPadding = 4 // maybe?
+const paddingUI = 4
+
 var glitchesUIX = 0
 var glitchesUIY = 0
 
 const glitchesUIHeight = 18
 const glitchesUIWidth = 16*9 + 2
+
+var glitchesUIAbsorbX = 0
+var glitchesUIAbsorbWidth = 0
+var glitchesUIInfoX = 0
+var glitchesUIInfoWidth = 0
+
 const mapUIHeight = 43
 const mapUIWidth = 150
