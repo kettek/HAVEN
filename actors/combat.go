@@ -252,6 +252,11 @@ func (c *Combat) AddGlitch(g game.GlitchActor) {
 	if c.currentGlitch == nil {
 		c.currentGlitch = g
 	}
+	if gl, ok := g.(*Glitch); ok {
+		gl.spriteStack.Highlight = false
+		gl.spriteStack.SkewX = 0
+		gl.spriteStack.SkewY = 0
+	}
 }
 
 func (c *Combat) RemoveGlitch(g game.GlitchActor) {
