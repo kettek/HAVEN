@@ -69,13 +69,13 @@ func init() {
                               
                               
                               
-                             e
+                              
                               
                               
                               
                               
              V                
-          V                   
+          V   V     w w       
                               
                               
                               
@@ -89,9 +89,9 @@ func init() {
                               
                               
                               
-      v                       
-                       v      
-                  v           
+      v        v              
+           w w    v    v      
+                              
                               
                               
    D   B   B   B   B          
@@ -101,14 +101,14 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					d := s.(*actors.Interactable)
-					d.SetName("door to ![haven hall]")
-					d.SetTag("hall-door")
-					d.SpriteStack().SetSprite("haven-door-unlocked")
+					d.SetName("door to triplets")
+					d.SetTag("triplets-to-harbinger-door")
+					d.SpriteStack().SetSprite("harbinger-door-unlocked")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					return commands.Travel{
-						Room:    "000a_hall",
-						Tag:     "hall-door",
+						Room:    "001a_triplets",
+						Tag:     "triplets-to-harbinger-door",
 						OffsetY: 1,
 						Target:  other,
 					}
@@ -117,19 +117,19 @@ func init() {
 			"B": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
-					s.SpriteStack().SetSprite("harbinger-door-sealed")
+					s.SpriteStack().SetSprite("harbinger-door")
 				},
 			},
 			"T": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
-					s.SpriteStack().SetSprite("harbinger-door")
-					s.SetTag("triplets-door")
+					s.SpriteStack().SetSprite("harbinger-door-unlocked")
+					s.SetTag("harbinger-to-brokensight-door")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					return commands.Travel{
-						Room:    "001a_triplets",
-						Tag:     "harbinger-door",
+						Room:    "002_brokensight",
+						Tag:     "harbinger-to-brokensight-door",
 						OffsetY: -1,
 						Target:  other,
 					}
@@ -159,7 +159,17 @@ func init() {
 					s.(*actors.Glitch).SetLevel(rand.Intn(2))
 					s.(*actors.Glitch).Z = 1
 					s.(*actors.Glitch).Floats = true
-					s.(*actors.Glitch).SetStats(8, 4, 4)
+					s.(*actors.Glitch).SetStats(8, 4, 6)
+				},
+			},
+			"w": {
+				Actor: "glitch",
+				OnCreate: func(s game.Actor) {
+					g := s.(*actors.Glitch)
+					g.SpriteStack().SetSprite("glitch-wanderer")
+					g.SetName("wanderer")
+					g.Wanders = true
+					g.SetStats(2, 8, 4)
 				},
 			},
 		},

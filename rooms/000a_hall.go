@@ -67,7 +67,7 @@ func init() {
 		             DT
 		`,
 		entityMap: EntityDefs{
-			"i": {
+			/*"i": {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					i := s.(*actors.Interactable)
@@ -85,7 +85,7 @@ func init() {
 					}()
 					return nil
 				},
-			},
+			},*/
 			"e": {
 				Actor: "glitch",
 				OnCreate: func(s game.Actor) {
@@ -101,14 +101,14 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					d := s.(*actors.Interactable)
-					d.SetName("door to ![harbinger]")
-					d.SpriteStack().SetSprite("harbinger-door")
-					d.SetTag("hall-door")
+					d.SetName("door to triplets")
+					d.SpriteStack().SetSprite("harbinger-door-unlocked")
+					d.SetTag("hall-to-triplets-door")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					return commands.Travel{
-						Room:    "001_harbinger",
-						Tag:     "hall-door",
+						Room:    "001a_triplets",
+						Tag:     "hall-to-triplets-door",
 						OffsetY: -1,
 						Target:  other,
 					}
@@ -255,12 +255,13 @@ func init() {
 				if g := r.GetActorByTag("glitch"); g == nil {
 					go func() {
 						<-w.MessageR(game.Message{
-							Duration:   3 * time.Second,
+							Duration:   4 * time.Second,
 							Color:      color.NRGBA{0, 0, 0, 255},
 							Background: color.NRGBA{255, 255, 255, 255},
-							Text:       "<KNOW>\nthis place is cleansed",
+							Text:       "<KNOW>\nthis place is cleansed\n...see clearly now",
 						})
 					}()
+					r.ToIso()
 					glitchDead = true
 				}
 			}

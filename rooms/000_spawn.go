@@ -50,7 +50,7 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					d := s.(*actors.Interactable)
-					d.SetName("door to ![unknown]")
+					d.SetName("door to outside")
 					d.SpriteStack().SetSprite("haven-door")
 					d.SetTag("haven-door")
 				},

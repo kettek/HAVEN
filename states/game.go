@@ -204,7 +204,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
+	/*if inpututil.IsKeyJustReleased(ebiten.KeySpace) {
 		g.Room().ToIso()
 		x, y := g.Room().CenterIso()
 		g.Camera().MoveTo(x, y)
@@ -212,7 +212,7 @@ func (g *Game) Update() error {
 		g.Room().ToFlat()
 		x, y := g.Room().Center()
 		g.Camera().MoveTo(x, y)
-	}
+	}*/
 	if inpututil.IsKeyJustReleased(ebiten.KeyM) {
 		if settings.FilterMode == settings.MayoMode {
 			settings.FilterMode = settings.ClarityMode

@@ -2,30 +2,31 @@ package rooms
 
 import (
 	"image/color"
+	"time"
 
 	"github.com/kettek/ebihack23/actors"
 	"github.com/kettek/ebihack23/commands"
 	"github.com/kettek/ebihack23/game"
+	"github.com/kettek/ebihack23/res"
 )
 
 func init() {
+	first := true
 	rooms["001a_triplets"] = Room{
 		name:     "the triplets",
 		song:     "infrequent-lament",
 		darkness: 2,
 		color:    color.NRGBA{15, 7, 26, 255},
 		tiles: `// First line is ignored because lazy.
-    #######   
-   ##     ##  
-  ##       ## 
- ##         ##
+    ###.###   
+   ##  _  ##  
+  ##_______## 
+ ## _  _  _ ##
  #  .  .  .  #
  #  _  _  _  #
  #  _  _  _  #
- #  _  _  _  #
  ##.........##
-  ##.......## 
-   ##.....##  
+  ###.....### 
     ###.###   
 		`,
 		tileDefs: TileDefs{
@@ -44,13 +45,11 @@ func init() {
 			},
 		},
 		entities: `
-           
+       E   
              
              
              
     1  2  3  
-             
-             
              
              
              
@@ -62,15 +61,32 @@ func init() {
 				Actor: "interactable",
 				OnCreate: func(s game.Actor) {
 					d := s.(*actors.Interactable)
+					d.SetName("door to hall")
+					d.SpriteStack().SetSprite("haven-door-unlocked")
+					d.SetTag("hall-to-triplets-door")
+				},
+				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
+					return commands.Travel{
+						Room:    "000a_hall",
+						Tag:     "hall-to-triplets-door",
+						OffsetY: 1,
+						Target:  other,
+					}
+				},
+			},
+			"E": {
+				Actor: "interactable",
+				OnCreate: func(s game.Actor) {
+					d := s.(*actors.Interactable)
 					d.SetName("door to harbinger")
 					d.SpriteStack().SetSprite("harbinger-door")
-					d.SetTag("harbinger-door")
+					d.SetTag("triplets-to-harbinger-door")
 				},
 				OnInteract: func(w *game.World, r *game.Room, s game.Actor, other game.Actor) commands.Command {
 					return commands.Travel{
 						Room:    "001_harbinger",
-						Tag:     "triplets-door",
-						OffsetY: 1,
+						Tag:     "triplets-to-harbinger-door",
+						OffsetY: -1,
 						Target:  other,
 					}
 				},
@@ -141,15 +157,22 @@ func init() {
 		},
 		metadata: make(map[string]interface{}),
 		enter: func(w *game.World, r *game.Room) {
-			/*makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
+			if !first {
+				return
+			}
+			first = false
+			makeBigMsg := func(s string, d time.Duration, c color.NRGBA) game.Message {
 				return game.Message{Text: s, Duration: d, Color: c, Font: &res.BigFont}
 			}
 			delayTimeR(1 * time.Second)
-			clr := color.NRGBA{0, 255, 0, 255}
-			<-w.MessageR(makeBigMsg("We are the triplets, three.", 3000*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("It hurts to be...", 3000*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("but not due to thee", 3000*time.Millisecond, clr))
-			<-w.MessageR(makeBigMsg("but rather, GRE!", 3000*time.Millisecond, clr))*/
+			clr := color.NRGBA{200, 64, 200, 255}
+			<-w.MessageR(makeBigMsg("we are three with systems corrupted", 4000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("one piercing,", 2000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("one defending,", 2000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("one hardy", 2000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("defeat any", 2000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("and fix this place", 2000*time.Millisecond, clr))
+			<-w.MessageR(makeBigMsg("...please", 1000*time.Millisecond, clr))
 		},
 		leave: func(w *game.World, r *game.Room) {
 		},

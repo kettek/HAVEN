@@ -460,7 +460,9 @@ func (w *World) EnterRoom(room *Room) {
 	go func() {
 		<-w.FuncR(func() {
 			if w.Room != nil {
-				w.Room.OnLeave(w, w.Room)
+				if w.Room.OnLeave != nil {
+					w.Room.OnLeave(w, w.Room)
+				}
 				w.Room.active = false
 			}
 		})
@@ -482,7 +484,9 @@ func (w *World) EnterRoom(room *Room) {
 			}
 
 		})
-		w.Room.OnEnter(w, w.Room)
+		if w.Room.OnEnter != nil {
+			w.Room.OnEnter(w, w.Room)
+		}
 		<-w.FuncR(func() {
 			w.Room.Activate()
 			if w.Room.Glitches > 0 {
