@@ -205,7 +205,35 @@ func (w *World) Input(in inputs.Input) {
 		w.Combat.Input(in)
 	} else {
 		if !w.Room.Input(w, in) {
-			// TODO: Send to camera?
+			switch in := in.(type) {
+			case inputs.Key:
+				// glitch 1-9 key selection.
+				for i := int(ebiten.KeyDigit1); i <= int(ebiten.KeyDigit9); i++ {
+					if in.Key != ebiten.Key(i) {
+						continue
+					}
+					if w.PlayerActor != nil {
+						glitches := w.PlayerActor.(CombatActor).Glitches()
+						j := i - int(ebiten.KeyDigit1)
+						if j < len(glitches) {
+							w.PlayerActor.(CombatActor).SetGlitch(glitches[j])
+						}
+					}
+				}
+			case inputs.Click:
+				x, y := int(in.X), int(in.Y)
+				// Check for glitch select, absorb, etc.
+				if x >= glitchesUIX && x <= glitchesUIX+glitchesUIWidth && y >= glitchesUIY && y <= glitchesUIY+glitchesUIHeight {
+					gx := (x - glitchesUIX) / 16
+					if w.PlayerActor != nil {
+						glitches := w.PlayerActor.(CombatActor).Glitches()
+						if gx < len(glitches) {
+							w.PlayerActor.(CombatActor).SetGlitch(glitches[gx])
+						}
+					}
+				}
+			}
+
 		}
 	}
 }
@@ -263,8 +291,8 @@ func (w *World) Draw(screen *ebiten.Image) {
 		x := 6
 		y := screen.Bounds().Dy() - 90
 
-		vector.DrawFilledRect(screen, float32(x), float32(y), 180, 84, color.NRGBA{19, 19, 97, 200}, false)
-		vector.StrokeRect(screen, float32(x), float32(y), 180, 84, 3, color.NRGBA{194, 193, 174, 255}, true)
+		vector.DrawFilledRect(screen, float32(x), float32(y), playerUIWidth, playerUIHeight, color.NRGBA{19, 19, 97, 200}, false)
+		vector.StrokeRect(screen, float32(x), float32(y), playerUIWidth, playerUIHeight, 3, color.NRGBA{194, 193, 174, 255}, true)
 		x += 4
 		y += 3
 
@@ -295,13 +323,14 @@ func (w *World) Draw(screen *ebiten.Image) {
 		if len(glitches) > 0 {
 			y := y - 1
 			x := x + 180 + 4
-			pw := 16*9 + 2
-			vector.DrawFilledRect(screen, float32(x), float32(y), float32(pw), 18, color.NRGBA{19, 19, 97, 200}, false)
-			vector.StrokeRect(screen, float32(x), float32(y), float32(pw), 18, 3, color.NRGBA{194, 193, 174, 255}, true)
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(glitchesUIWidth), glitchesUIHeight, color.NRGBA{19, 19, 97, 200}, false)
+			vector.StrokeRect(screen, float32(x), float32(y), float32(glitchesUIWidth), glitchesUIHeight, 3, color.NRGBA{194, 193, 174, 255}, true)
 			x += 4
 			y += 3
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(x), float64(y))
+			glitchesUIX = x
+			glitchesUIY = y
 			for _, g := range glitches {
 				if g == w.PlayerActor.(CombatActor).CurrentGlitch() {
 					g.SpriteStack().Highlight = true
@@ -313,26 +342,24 @@ func (w *World) Draw(screen *ebiten.Image) {
 		}
 
 		// Draw map UI
-		pw := float32(150)
-		ph := float32(43)
-		x = screen.Bounds().Dx() - int(pw) - 6
+		x = screen.Bounds().Dx() - int(mapUIWidth) - 6
 		y = 6
 
 		fg := w.Room.Color
 		// bg is inverse of fg with wrap around.
 		bg := color.NRGBA{255 - fg.R, 255 - fg.G, 255 - fg.B, 255}
 
-		vector.DrawFilledRect(screen, float32(x), float32(y), pw, ph, bg, false)
-		vector.StrokeRect(screen, float32(x), float32(y), pw, ph, 3, fg, true)
+		vector.DrawFilledRect(screen, float32(x), float32(y), mapUIWidth, mapUIHeight, bg, false)
+		vector.StrokeRect(screen, float32(x), float32(y), mapUIWidth, mapUIHeight, 3, fg, true)
 		y += 3
 
 		res.Text.SetColor(fg)
 		res.Text.SetAlign(etxt.Right | etxt.Top)
-		res.Text.Draw(screen, w.Room.Name, x+int(pw)-4, y)
+		res.Text.Draw(screen, w.Room.Name, x+int(mapUIWidth)-4, y)
 		y += 16
 		res.Text.SetFont(res.SmallFont.Font)
 		res.Text.SetSize(float64(res.SmallFont.Size))
-		res.Text.Draw(screen, w.Room.Song, x+int(pw)-4, y)
+		res.Text.Draw(screen, w.Room.Song, x+int(mapUIWidth)-4, y)
 		res.Text.SetAlign(etxt.Left | etxt.Top)
 		y += 12
 		if w.Room.MaxGlitches == 0 {
@@ -475,3 +502,14 @@ func (w *World) FuncR(fnc func()) chan bool {
 	w.RoutineChan <- f
 	return done
 }
+
+const playerUIHeight = 84
+const playerUIWidth = 180
+const playerUIPadding = 4 // maybe?
+var glitchesUIX = 0
+var glitchesUIY = 0
+
+const glitchesUIHeight = 18
+const glitchesUIWidth = 16*9 + 2
+const mapUIHeight = 43
+const mapUIWidth = 150
