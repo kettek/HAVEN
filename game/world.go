@@ -266,12 +266,19 @@ func (w *World) Input(in inputs.Input) {
 							p, f, i := glitch.(CombatActor).CurrentStats()
 							mp, mf, mi := glitch.(CombatActor).MaxStats()
 							ability := "-"
+							abilityStuff := ""
 							abilityDesc := ""
+							if glitch.Ability() != nil {
+								ability = glitch.Ability().Name + " " + fmt.Sprintf("(%d)", glitch.Ability().Tier)
+								abilityStuff = fmt.Sprintf("         TURNS: %d | COOLDOWN: %d", glitch.Ability().Turns, glitch.Ability().Cooldown)
+								abilityDesc = string(AbilityDescriptions[AbilityType(glitch.Ability().Name)])
+							}
 							info += fmt.Sprintf("INTEGRITY %d/%d\n", i, mi)
 							info += fmt.Sprintf("FIREWALL %d/%d\n", f, mf)
 							info += fmt.Sprintf("PENETRATION %d/%d\n", p, mp)
 							info += fmt.Sprintf("ABILITY: %s\n", ability)
-							info += fmt.Sprintf("%s\n", abilityDesc)
+							info += fmt.Sprintf("%s\n", abilityStuff)
+							info += abilityDesc
 							w.AddPrompt([]string{"OK"}, info, func(i int, s string) bool {
 								return true
 							}, false)

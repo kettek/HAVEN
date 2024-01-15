@@ -24,6 +24,16 @@ const (
 	AbilityDescriptionRandomDamage                    = "Deals random bonus damage up to Tier for Turns."
 )
 
+var AbilityDescriptions = map[AbilityType]AbilityDescription{
+	AbilityNone:         AbilityDescriptionNone,
+	AbilityBlock:        AbilityDescriptionBlock,
+	AbilityPerfectHit:   AbilityDescriptionPerfectHit,
+	AbilityPerfectBlock: AbilityDescriptionPerfectBlock,
+	AbilityHardy:        AbilityDescriptionHardy,
+	AbilityCleave:       AbilityDescriptionCleave,
+	AbilityRandomDamage: AbilityDescriptionRandomDamage,
+}
+
 type Ability struct {
 	Name     string
 	Tier     int
