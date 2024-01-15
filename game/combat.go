@@ -32,6 +32,7 @@ type Combat struct {
 	action        CombatAction
 	report        []CombatLine
 	AutoCapture   bool
+	ability       Ability
 }
 
 type CombatLine struct {
@@ -45,6 +46,7 @@ var defenseColor = color.NRGBA{50, 255, 50, 200}
 var neutralColor = color.NRGBA{200, 200, 200, 200}
 var infoColor = color.NRGBA{255, 255, 50, 200}
 var importantColor = color.NRGBA{255, 50, 255, 200}
+var abilityColor = color.NRGBA{50, 50, 255, 200}
 
 type CombatAction interface {
 	Done(c *Combat) (CombatAction, bool)
@@ -124,6 +126,19 @@ func (c CombatActionAttack) Done(cmb *Combat) (CombatAction, bool) {
 
 func (c *CombatActionAttack) Update(cmb *Combat) {
 	c.timer++
+
+	// This isn't efficient, but it's easier if I throw this here.
+	var attackerAbility *Ability
+	var defenderAbility *Ability
+	if c.isAttacker {
+		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
+			attackerAbility = glitch.Ability()
+		}
+	} else {
+		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
+			defenderAbility = glitch.Ability()
+		}
+	}
 	if c.timer == 10 {
 		icon := res.LoadImage("icon-attack")
 		/*if c.stat == "INTEGRITY" {
@@ -143,8 +158,15 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		}
 		v := attacker.RollAttack()
 		var bonus int
-		if glitch := attacker.CurrentGlitch(); glitch != nil {
-			bonus = glitch.RollAttack() / 4
+		if attackerAbility != nil && attackerAbility.Name == AbilityPerfectHit {
+			v = attackerAbility.Tier * 2
+			bonus = 0
+			cmb.AddReport(fmt.Sprintf("%s for %d!", attackerAbility.Name, v), nil, abilityColor)
+		}
+		if attackerAbility != nil && attackerAbility.Name == AbilityRandomDamage {
+			b := rand.Intn(1 + attackerAbility.Tier)
+			bonus += b
+			cmb.AddReport(fmt.Sprintf("%s for +%d!", attackerAbility.Name, b), nil, abilityColor)
 		}
 		if v+bonus <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon, infoColor)
@@ -153,18 +175,43 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		}
 		_, _, inte := defender.CurrentStats()
 		if inte <= 0 {
-			defender.Kill()
-			c.next = &CombatActionDone{
-				isAttacker: c.isAttacker,
-				Result: commands.CombatResult{
-					Winner:    attacker,
-					Loser:     defender,
-					Destroyed: true,
-					ExpGained: defender.ExpValue(),
-				},
+			if defenderAbility != nil && defenderAbility.Name == AbilityHardy {
+				cmb.AddReport(fmt.Sprintf("%s!", defenderAbility.Name), nil, infoColor)
+				res.PlaySound("miss")
+				return
+			} else {
+				defender.Kill()
+				c.next = &CombatActionDone{
+					isAttacker: c.isAttacker,
+					Result: commands.CombatResult{
+						Winner:    attacker,
+						Loser:     defender,
+						Destroyed: true,
+						ExpGained: defender.ExpValue(),
+					},
+				}
+				c.timer = 120
+				return
 			}
-			c.timer = 120
-			return
+		}
+		if defenderAbility != nil {
+			if defenderAbility.Name == AbilityBlock {
+				red := defenderAbility.Tier * 2
+				// reduce v by red, and if red still has some left, apply it to bonus.
+				v -= red
+				if v < 0 {
+					bonus += v
+					if bonus < 0 {
+						bonus = 0
+					}
+					v = 0
+				}
+				cmb.AddReport(fmt.Sprintf("%s!", defenderAbility.Name), nil, abilityColor)
+			} else if defenderAbility.Name == AbilityPerfectBlock {
+				cmb.AddReport(fmt.Sprintf("%s!", defenderAbility.Name), nil, abilityColor)
+				v = 0
+				bonus = 0
+			}
 		}
 		if c.stat == "INTEGRITY" {
 			_, _, v = defender.ReduceDamage(-1, -1, v+bonus)
@@ -242,6 +289,93 @@ func (c *CombatActionBoost) Update(cmb *Combat) {
 }
 
 func (c CombatActionBoost) IsAttacker() bool {
+	return c.isAttacker
+}
+
+type CombatActionAbility struct {
+	isAttacker bool
+	timer      int
+}
+
+func (c CombatActionAbility) Done(cmb *Combat) (CombatAction, bool) {
+	return nil, c.timer >= 120
+}
+
+func (c *CombatActionAbility) Update(cmb *Combat) {
+	c.timer++
+	//var attacker CombatActor
+	var defender CombatActor
+	var attackerAbility *Ability
+	var defenderAbility *Ability
+	if c.isAttacker {
+		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
+			attackerAbility = glitch.Ability()
+		}
+		if glitch := cmb.Defender.CurrentGlitch(); glitch != nil {
+			defenderAbility = glitch.Ability()
+		}
+		//attacker = cmb.Attacker
+		defender = cmb.Defender
+	} else {
+		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
+			defenderAbility = glitch.Ability()
+		}
+		if glitch := cmb.Defender.CurrentGlitch(); glitch != nil {
+			attackerAbility = glitch.Ability()
+		}
+		//attacker = cmb.Defender
+		defender = cmb.Attacker
+	}
+	if c.timer == 10 {
+		if attackerAbility != nil {
+			if attackerAbility.Name == AbilityCleave {
+				p, f, i := defender.CurrentStats()
+				r := rand.Intn(3)
+				if r == 0 {
+					p /= 2
+					f = -1
+					i = -i
+				} else if r == 1 {
+					p = -1
+					f /= 2
+					i = -1
+				} else {
+					p = -1
+					f = -1
+					i /= 2
+				}
+				if defenderAbility != nil {
+					if defenderAbility.Name == AbilityBlock {
+						if r == 0 {
+							p -= defenderAbility.Tier * 2
+							if p < 0 {
+								p = 0
+							}
+						} else if r == 1 {
+							f -= defenderAbility.Tier * 2
+							if f < 0 {
+								f = 0
+							}
+						} else {
+							i -= defenderAbility.Tier * 2
+							if i < 0 {
+								i = 0
+							}
+						}
+					} else if defenderAbility.Name == AbilityPerfectBlock {
+						p = -1
+						f = -1
+						i = -1
+					}
+				}
+				p, f, i = defender.ReduceDamage(p, f, i)
+				defender.ApplyDamage(p, f, i)
+			}
+		}
+	}
+}
+
+func (c CombatActionAbility) IsAttacker() bool {
 	return c.isAttacker
 }
 
@@ -478,6 +612,35 @@ func (c *Combat) AddReport(text string, icon *ebiten.Image, color color.NRGBA) {
 	c.report = c.report[cull:]
 	res.Text.Utils().RestoreState()
 }
+func (c *Combat) RefreshGlitchUse() {
+	var glitchMenuItems []CombatMenuItem
+	if gl := c.Attacker.CurrentGlitch(); gl != nil {
+		if abil := gl.Ability(); abil != nil {
+			text := abil.Name
+			if abil.OnCooldown() || abil.IsActive() {
+				text += fmt.Sprintf(" (%d)", abil.cooldown+(abil.Turns-abil.turnsActive))
+			}
+			glitchMenuItems = append(glitchMenuItems, CombatMenuItem{
+				Text:     text,
+				Disabled: abil.OnCooldown() || abil.IsActive(),
+				Trigger: func() {
+					abil.Activate()
+					c.SetAction(&CombatActionAbility{
+						isAttacker: true,
+					})
+				},
+			})
+		}
+	}
+	glitchMenuItems = append(glitchMenuItems, CombatMenuItem{
+		Text: "CANCEL",
+		Trigger: func() {
+			c.SwapMenu(CombatMenuModeMain)
+		},
+	})
+	c.menus.use.items = glitchMenuItems
+	c.menus.use.selectedIndex = 0
+}
 
 func (c *Combat) RefreshGlitchSwap() {
 	var glitchMenuItems []CombatMenuItem
@@ -650,6 +813,7 @@ func NewCombat(w, h int, attacker, defender CombatActor) *Combat {
 			},
 		},
 	}
+	c.RefreshGlitchUse()
 	c.RefreshGlitchSwap()
 	c.SwapMenu(CombatMenuModeMain)
 	c.Refresh()
@@ -674,6 +838,21 @@ func (c *Combat) GenerateEnemyAction() CombatAction {
 	return &CombatActionBoost{stat: t, isAttacker: false}
 }
 
+func (c *Combat) RefreshAbilities() {
+	actors := []CombatActor{c.Attacker, c.Defender}
+	for _, actor := range actors {
+		for _, glitch := range actor.Glitches() {
+			if abil := glitch.Ability(); abil != nil {
+				if abil.IsActive() {
+					abil.Turn()
+				} else {
+					abil.ReduceCooldown()
+				}
+			}
+		}
+	}
+}
+
 func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 	c.attackerFloat += 0.025
 	c.defenderFloat += 0.05
@@ -684,6 +863,7 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 		c.action.Update(c)
 		next, done := c.action.Done(c)
 		if done {
+			c.RefreshAbilities()
 			if next != nil {
 				c.SetAction(next)
 			} else {
@@ -704,6 +884,7 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 					c.action = nil
 					// ugh, this is stupid, but having some dumb issues
 					c.RefreshGlitchSwap()
+					c.RefreshGlitchUse()
 				}
 			}
 		}

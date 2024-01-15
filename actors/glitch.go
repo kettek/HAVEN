@@ -39,6 +39,7 @@ type Glitch struct {
 	Floats           bool
 	Wanders          bool
 	ghosting         bool
+	ability          *game.Ability
 	warpEffects      []WarpEffect
 }
 
@@ -333,6 +334,14 @@ func (g *Glitch) SetGhosting(b bool) {
 
 func (g *Glitch) Glitch() bool {
 	return true
+}
+
+func (g *Glitch) SetAbility(a *game.Ability) {
+	g.ability = a
+}
+
+func (g *Glitch) Ability() *game.Ability {
+	return g.ability
 }
 
 func init() {

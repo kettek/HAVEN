@@ -75,6 +75,6 @@ type GlitchActor interface {
 	RollBoost() (pen, fire, inte int)
 	RollAttack() (pen int)
 	AddExp(int) int
-	Ability() Ability
-	SetAbility(Ability)
+	Ability() *Ability
+	SetAbility(*Ability)
 }
