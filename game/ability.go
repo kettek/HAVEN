@@ -25,9 +25,10 @@ const (
 )
 
 type Ability struct {
-	Name  string
-	Tier  int
-	Turns int
+	Name     string
+	Tier     int
+	Turns    int
+	Cooldown int
 
 	cooldown    int
 	turnsActive int
@@ -46,6 +47,7 @@ func (b *Ability) ReduceCooldown() {
 
 func (b *Ability) Activate() {
 	b.turnsActive = b.Turns
+	b.cooldown = b.Cooldown
 }
 
 func (b *Ability) OnCooldown() bool {
@@ -59,8 +61,5 @@ func (b *Ability) IsActive() bool {
 func (b *Ability) Turn() {
 	if b.turnsActive > 0 {
 		b.turnsActive--
-		if b.turnsActive == 0 {
-			b.Reset()
-		}
 	}
 }

@@ -80,7 +80,7 @@ func init() {
 				OnCreate: func(s game.Actor) {
 					g := s.(*actors.Glitch)
 					g.SpriteStack().SetSprite("minion-pen")
-					g.SetName("minion-pen")
+					g.SetName("minpen")
 					g.Z = 1
 					g.Floats = true
 					g.Wanders = false
@@ -88,6 +88,12 @@ func init() {
 					g.SpriteStack().Shaded = true
 					g.SetLevel(2)
 					g.SetStats(10, 5, 5)
+					g.SetAbility(&game.Ability{
+						Name:     game.AbilityPerfectHit,
+						Tier:     2,
+						Turns:    2,
+						Cooldown: 2,
+					})
 				},
 			},
 			"2": {
@@ -95,7 +101,7 @@ func init() {
 				OnCreate: func(s game.Actor) {
 					g := s.(*actors.Glitch)
 					g.SpriteStack().SetSprite("minion-wall")
-					g.SetName("minion-wall")
+					g.SetName("minwall")
 					g.Z = 1
 					g.Floats = true
 					g.Wanders = false
@@ -103,6 +109,12 @@ func init() {
 					g.SpriteStack().Shaded = true
 					g.SetLevel(2)
 					g.SetStats(5, 5, 10)
+					g.SetAbility(&game.Ability{
+						Name:     game.AbilityBlock,
+						Tier:     2,
+						Turns:    4,
+						Cooldown: 3,
+					})
 				},
 			},
 			"3": {
@@ -110,7 +122,7 @@ func init() {
 				OnCreate: func(s game.Actor) {
 					g := s.(*actors.Glitch)
 					g.SpriteStack().SetSprite("minion-shel")
-					g.SetName("minion-shel")
+					g.SetName("minshel")
 					g.Z = 1
 					g.Floats = true
 					g.Wanders = false
@@ -118,6 +130,12 @@ func init() {
 					g.SpriteStack().Shaded = true
 					g.SetLevel(2)
 					g.SetStats(5, 10, 5)
+					g.SetAbility(&game.Ability{
+						Name:     game.AbilityHardy,
+						Tier:     1,
+						Turns:    3,
+						Cooldown: 4,
+					})
 				},
 			},
 		},

@@ -132,11 +132,15 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 	var defenderAbility *Ability
 	if c.isAttacker {
 		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
-			attackerAbility = glitch.Ability()
+			if abil := glitch.Ability(); abil != nil && abil.IsActive() {
+				attackerAbility = abil
+			}
 		}
 	} else {
 		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
-			defenderAbility = glitch.Ability()
+			if abil := glitch.Ability(); abil != nil && abil.IsActive() {
+				defenderAbility = abil
+			}
 		}
 	}
 	if c.timer == 10 {
@@ -158,9 +162,11 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		}
 		v := attacker.RollAttack()
 		var bonus int
+		var perfect bool
 		if attackerAbility != nil && attackerAbility.Name == AbilityPerfectHit {
 			v = attackerAbility.Tier * 2
 			bonus = 0
+			perfect = true
 			cmb.AddReport(fmt.Sprintf("%s for %d!", attackerAbility.Name, v), nil, abilityColor)
 		}
 		if attackerAbility != nil && attackerAbility.Name == AbilityRandomDamage {
@@ -194,7 +200,7 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 				return
 			}
 		}
-		if defenderAbility != nil {
+		if defenderAbility != nil && !perfect {
 			if defenderAbility.Name == AbilityBlock {
 				red := defenderAbility.Tier * 2
 				// reduce v by red, and if red still has some left, apply it to bonus.
@@ -214,13 +220,19 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 			}
 		}
 		if c.stat == "INTEGRITY" {
-			_, _, v = defender.ReduceDamage(-1, -1, v+bonus)
+			if !perfect {
+				_, _, v = defender.ReduceDamage(-1, -1, v+bonus)
+			}
 			_, _, v = defender.ApplyDamage(-1, -1, v+bonus)
 		} else if c.stat == "FIREWALL" {
-			_, v, _ = defender.ReduceDamage(-1, v+bonus, -1)
+			if !perfect {
+				_, v, _ = defender.ReduceDamage(-1, v+bonus, -1)
+			}
 			_, v, _ = defender.ApplyDamage(-1, v+bonus, -1)
 		} else if c.stat == "PENETRATION" {
-			v, _, _ = defender.ReduceDamage(v+bonus, -1, -1)
+			if !perfect {
+				v, _, _ = defender.ReduceDamage(v+bonus, -1, -1)
+			}
 			v, _, _ = defender.ApplyDamage(v+bonus, -1, -1)
 		}
 		if v <= 0 {
@@ -303,7 +315,7 @@ func (c CombatActionAbility) Done(cmb *Combat) (CombatAction, bool) {
 
 func (c *CombatActionAbility) Update(cmb *Combat) {
 	c.timer++
-	//var attacker CombatActor
+	var attacker CombatActor
 	var defender CombatActor
 	var attackerAbility *Ability
 	var defenderAbility *Ability
@@ -314,7 +326,7 @@ func (c *CombatActionAbility) Update(cmb *Combat) {
 		if glitch := cmb.Defender.CurrentGlitch(); glitch != nil {
 			defenderAbility = glitch.Ability()
 		}
-		//attacker = cmb.Attacker
+		attacker = cmb.Attacker
 		defender = cmb.Defender
 	} else {
 		if glitch := cmb.Attacker.CurrentGlitch(); glitch != nil {
@@ -323,26 +335,37 @@ func (c *CombatActionAbility) Update(cmb *Combat) {
 		if glitch := cmb.Defender.CurrentGlitch(); glitch != nil {
 			attackerAbility = glitch.Ability()
 		}
-		//attacker = cmb.Defender
+		attacker = cmb.Defender
 		defender = cmb.Attacker
 	}
 	if c.timer == 10 {
 		if attackerAbility != nil {
+			attackerAbility.Activate()
+			cmb.AddReport(fmt.Sprintf("%s uses %s!", attacker.Name(), attackerAbility.Name), res.LoadImage("icon-ability"), infoColor)
+		} else if c.timer == 60 {
 			if attackerAbility.Name == AbilityCleave {
 				p, f, i := defender.CurrentStats()
+				var v int
 				r := rand.Intn(3)
+				var stat string
 				if r == 0 {
 					p /= 2
 					f = -1
 					i = -i
+					v = p
+					stat = "PENETRATION"
 				} else if r == 1 {
 					p = -1
 					f /= 2
 					i = -1
+					v = f
+					stat = "FIREWALL"
 				} else {
 					p = -1
 					f = -1
 					i /= 2
+					v = i
+					stat = "INTEGRITY"
 				}
 				if defenderAbility != nil {
 					if defenderAbility.Name == AbilityBlock {
@@ -350,16 +373,19 @@ func (c *CombatActionAbility) Update(cmb *Combat) {
 							p -= defenderAbility.Tier * 2
 							if p < 0 {
 								p = 0
+								v = 0
 							}
 						} else if r == 1 {
 							f -= defenderAbility.Tier * 2
 							if f < 0 {
 								f = 0
+								v = 0
 							}
 						} else {
 							i -= defenderAbility.Tier * 2
 							if i < 0 {
 								i = 0
+								v = 0
 							}
 						}
 					} else if defenderAbility.Name == AbilityPerfectBlock {
@@ -370,6 +396,7 @@ func (c *CombatActionAbility) Update(cmb *Combat) {
 				}
 				p, f, i = defender.ReduceDamage(p, f, i)
 				defender.ApplyDamage(p, f, i)
+				cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), stat, v), res.LoadImage("icon-attack"), attackColor)
 			}
 		}
 	}
@@ -617,6 +644,7 @@ func (c *Combat) RefreshGlitchUse() {
 	if gl := c.Attacker.CurrentGlitch(); gl != nil {
 		if abil := gl.Ability(); abil != nil {
 			text := abil.Name
+			fmt.Println("okay...", abil.Name, abil.cooldown, abil.turnsActive)
 			if abil.OnCooldown() || abil.IsActive() {
 				text += fmt.Sprintf(" (%d)", abil.cooldown+(abil.Turns-abil.turnsActive))
 			}
@@ -624,7 +652,6 @@ func (c *Combat) RefreshGlitchUse() {
 				Text:     text,
 				Disabled: abil.OnCooldown() || abil.IsActive(),
 				Trigger: func() {
-					abil.Activate()
 					c.SetAction(&CombatActionAbility{
 						isAttacker: true,
 					})
@@ -863,7 +890,6 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 		c.action.Update(c)
 		next, done := c.action.Done(c)
 		if done {
-			c.RefreshAbilities()
 			if next != nil {
 				c.SetAction(next)
 			} else {
@@ -883,6 +909,7 @@ func (c *Combat) Update(w *World, r *Room) (cmd commands.Command) {
 					c.SwapMenu(CombatMenuModeMain)
 					c.action = nil
 					// ugh, this is stupid, but having some dumb issues
+					c.RefreshAbilities() // ... only the player can have abilities
 					c.RefreshGlitchSwap()
 					c.RefreshGlitchUse()
 				}

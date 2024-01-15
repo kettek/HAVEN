@@ -137,7 +137,7 @@ func (c *Combat) RestoreStats() {
 func (c *Combat) CurrentStats() (int, int, int) {
 	p, f, i := c.penetration, c.firewall, c.integrity
 
-	return p - c.penaltyPenetration, f - c.penaltyFirewall, i - c.penaltyIntegrity
+	return p, f, i
 }
 
 func (c *Combat) MaxStats() (int, int, int) {
@@ -146,6 +146,10 @@ func (c *Combat) MaxStats() (int, int, int) {
 	p += c.level * c.maxPenetration / 10
 	f += c.level * c.maxFirewall / 10
 	i += c.level * c.maxIntegrity / 10
+
+	p -= c.penaltyPenetration
+	f -= c.penaltyFirewall
+	i -= c.penaltyIntegrity
 
 	return p, f, i
 }
