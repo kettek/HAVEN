@@ -515,7 +515,9 @@ func (w *World) AddPrompt(items []string, msg string, cb func(int, string) bool,
 			done = cb(i, s)
 		}
 		if done {
-			w.Prompts = w.Prompts[:len(w.Prompts)-1]
+			if len(w.Prompts) > 1 {
+				w.Prompts = w.Prompts[:len(w.Prompts)-1]
+			}
 		}
 		return done
 	}, showExtra))
