@@ -76,9 +76,11 @@ func (c *CombatActionDone) Update(combat *Combat) {
 				// Yeah, yeah, capturing isn't handled here because I'm lazy.
 			} else {
 				combat.AddReport(fmt.Sprintf("%s destroys %s!", combat.Attacker.Name(), combat.Defender.Name()), nil, attackColor)
+				res.PlaySound("death")
 			}
 		} else {
 			combat.AddReport(fmt.Sprintf("%s infects %s!", combat.Defender.Name(), combat.Attacker.Name()), nil, attackColor)
+			res.PlaySound("death")
 		}
 	}
 }
@@ -113,6 +115,7 @@ func (c CombatActionAttack) Done(cmb *Combat) (CombatAction, bool) {
 		} else if i <= 0 && c.stat == "INTEGRITY" {
 			cmb.AddReport(fmt.Sprintf("%s's integrity is down!", defender.Name()), nil, neutralColor)
 			cmb.AddReport(fmt.Sprintf("next attack will destroy %s", defender.Name()), res.LoadImage("icon-exclamation"), importantColor)
+			res.PlaySound("candie")
 		}
 		return nil, true
 	}
@@ -145,6 +148,7 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		}
 		if v+bonus <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but misses!", attacker.Name(), c.stat), icon, infoColor)
+			res.PlaySound("miss")
 			return
 		}
 		_, _, inte := defender.CurrentStats()
@@ -174,6 +178,7 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		}
 		if v <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s, but is denied!", attacker.Name(), c.stat), icon, infoColor)
+			res.PlaySound("miss")
 			return
 		}
 		if bonus > 0 {
@@ -181,6 +186,7 @@ func (c *CombatActionAttack) Update(cmb *Combat) {
 		} else {
 			cmb.AddReport(fmt.Sprintf("%s attacks %s for %d!", attacker.Name(), c.stat, v), icon, attackColor)
 		}
+		res.PlaySound("hit")
 	}
 }
 
@@ -227,8 +233,10 @@ func (c *CombatActionBoost) Update(cmb *Combat) {
 		}
 		if v <= 0 {
 			cmb.AddReport(fmt.Sprintf("%s fails to boost %s", attacker.Name(), c.stat), icon, infoColor)
+			res.PlaySound("miss")
 		} else {
 			cmb.AddReport(fmt.Sprintf("%s boosts %s for %d!", attacker.Name(), c.stat, v), icon, defenseColor)
+			res.PlaySound("boost")
 		}
 	}
 }
@@ -333,6 +341,7 @@ func (c *CombatActionCapture) Update(cmb *Combat) {
 		if len(cmb.Attacker.Glitches()) >= 9 {
 			cmb.AddReport(fmt.Sprintf("%s attempts to capture %s, but the quarantine is full!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
 			c.timer = 301
+			res.PlaySound("miss")
 		} else {
 			cmb.AddReport(fmt.Sprintf("%s attempts to capture %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
 		}
@@ -343,6 +352,7 @@ func (c *CombatActionCapture) Update(cmb *Combat) {
 			cmb.AddReport(fmt.Sprintf("%s captures %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
 			c.timer = 301
 			c.caught = true
+			res.PlaySound("caught")
 			return
 		}
 	} else if c.timer == 180 {
@@ -350,6 +360,7 @@ func (c *CombatActionCapture) Update(cmb *Combat) {
 	} else if c.timer == 240 {
 		if c.Try(cmb) {
 			cmb.AddReport(fmt.Sprintf("%s captures %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			res.PlaySound("caught")
 			c.timer = 301
 			c.caught = true
 			return
@@ -357,8 +368,10 @@ func (c *CombatActionCapture) Update(cmb *Combat) {
 	} else if c.timer == 300 {
 		if !c.Try(cmb) {
 			cmb.AddReport(fmt.Sprintf("%s failed to capture %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			res.PlaySound("miss")
 		} else {
 			cmb.AddReport(fmt.Sprintf("%s captures %s!", cmb.Attacker.Name(), cmb.Defender.Name()), nil, neutralColor)
+			res.PlaySound("caught")
 			c.caught = true
 		}
 	}

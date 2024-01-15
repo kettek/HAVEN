@@ -240,8 +240,18 @@ func (w *World) Input(in inputs.Input) {
 								} else if i == 1 {
 									// Restore stats so the glitch gives a minimal boost. :)
 									//glitch.(CombatActor).RestoreStats() // actually, no, having an injured glitch could be a cool tactic -- bring something real low, capture it, then use it for a self-heal.
-									w.PlayerActor.(CombatActor).ApplyBoost(glitch.RollBoost())
+									p, f, i := glitch.RollBoost()
+									w.PlayerActor.(CombatActor).ApplyBoost(p, f, i)
 									w.PlayerActor.(CombatActor).RemoveGlitch(glitch)
+									res.PlaySound("slurp")
+									px, py, _ := w.PlayerActor.Position()
+									w.Room.TileMessage(Message{
+										X:        px,
+										Y:        py,
+										Text:     fmt.Sprintf("+%dPEN +%dFIRE +%dINT", p, f, i),
+										Color:    color.NRGBA{0, 255, 255, 255},
+										Duration: 3 * time.Second,
+									})
 									return true
 								}
 								return true
