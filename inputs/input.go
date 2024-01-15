@@ -24,3 +24,7 @@ type MapClick struct {
 	Which ebiten.MouseButton
 	Mod   bool
 }
+
+type Key struct {
+	Key ebiten.Key
+}

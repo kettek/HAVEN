@@ -21,6 +21,7 @@ type Game struct {
 	processChan      chan func() bool
 	Cheats           bool
 	cheatEngine      *CheatEngine
+	keys             []ebiten.Key
 }
 
 func NewGame() *Game {
@@ -28,6 +29,7 @@ func NewGame() *Game {
 		processChan: make(chan func() bool),
 		Cheats:      true,
 		cheatEngine: NewCheatEngine(),
+		keys:        make([]ebiten.Key, 60),
 	}
 	g.cheatEngine.AddCheat("NOCLIP", func(g *Game) {
 		if g.world.PlayerActor != nil {
@@ -133,6 +135,14 @@ func (g *Game) Update() error {
 		} else if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonRight) {
 			x, y := ebiten.CursorPosition()
 			g.world.Input(inputs.Click{X: float64(x), Y: float64(y), Which: ebiten.MouseButtonRight, Mod: ebiten.IsKeyPressed(ebiten.KeyShift)})
+		}
+	}
+	// Also send any pressed keys as inputs.
+	{
+		g.keys = g.keys[:0]
+		g.keys = inpututil.AppendJustReleasedKeys(g.keys)
+		for _, k := range g.keys {
+			g.world.Input(inputs.Key{Key: k})
 		}
 	}
 
