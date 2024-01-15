@@ -169,6 +169,7 @@ func (c *Combat) AddExp(e int) int {
 		c.exp -= 100
 		c.level++
 		lvl++
+		c.RestoreStats()
 	}
 	return lvl
 }
