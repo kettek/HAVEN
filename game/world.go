@@ -210,6 +210,7 @@ func (w *World) Input(in inputs.Input) {
 	}
 }
 
+// Draw the room, combat, overlays, etc. Don't code like this. :)
 func (w *World) Draw(screen *ebiten.Image) {
 	if w.postProcessImage == nil {
 		w.postProcessImage = ebiten.NewImage(screen.Bounds().Dx(), screen.Bounds().Dy())
@@ -288,6 +289,28 @@ func (w *World) Draw(screen *ebiten.Image) {
 		y += 16
 		res.Text.SetColor(color.NRGBA{255, 255, 50, 200})
 		res.Text.Draw(screen, fmt.Sprintf("PENETRATION %d/%d", p, mp), x, y)
+
+		// Draw our lil glitchy bois if we got 'em
+		glitches := w.PlayerActor.(CombatActor).Glitches()
+		if len(glitches) > 0 {
+			y := y - 1
+			x := x + 180 + 4
+			pw := 16*9 + 2
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(pw), 18, color.NRGBA{19, 19, 97, 200}, false)
+			vector.StrokeRect(screen, float32(x), float32(y), float32(pw), 18, 3, color.NRGBA{194, 193, 174, 255}, true)
+			x += 4
+			y += 3
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(x), float64(y))
+			for _, g := range glitches {
+				if g == w.PlayerActor.(CombatActor).CurrentGlitch() {
+					g.SpriteStack().Highlight = true
+				}
+				g.SpriteStack().DrawFlat(screen, op.GeoM)
+				g.SpriteStack().Highlight = false
+				op.GeoM.Translate(16, 0)
+			}
+		}
 
 		// Draw map UI
 		pw := float32(150)
